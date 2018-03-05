@@ -249,8 +249,8 @@ MCMC=function(data,
     ## Tuning parameters
     ##
 
-    gamma.tune=0.01
-    beta.tune=rep(0.01,length(beta))
+    gamma.tune=0.002
+    beta.tune=c(0.1392345, 0.04616871, 0.1127799, 0.05642842, 0.03912024)
     theta.tune=40
     kappa.tune=1
     odp.tune=0.024

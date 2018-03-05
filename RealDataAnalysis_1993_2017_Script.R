@@ -1,3 +1,5 @@
+rm(list=ls())
+
 ############################################################################
 ############################################################################
 ############################################################################
@@ -7,8 +9,6 @@
 ############################################################################
 ############################################################################
 ############################################################################
-
-rm(list=ls())
 
 ###
 ### Packages and dependencies
@@ -25,6 +25,7 @@ required.packages=c("coda",
                     "maptools",
                     "raster",
                     "rasterVis",
+                    "RCurl",
                     "RColorBrewer",
                     "RcppArmadillo",
                     "rgdal",
@@ -90,11 +91,11 @@ propagator.plainZF=function(NN,delta,gamma,dx,dy,dt){
     H
 }
 
-
 #############################################
 ### Load Bathymetry Data
 #############################################
 
+## This file is available on GitHub
 load("~/Dropbox/Post-Doc/RFiles/lutris/data/bath.raster.RData")
 
 ###
@@ -126,7 +127,6 @@ keep=seq(1,time.steps,time.steps/length(1993:2012))
 
 us.fact=10
 
-
 ###
 ### Bathymetry data
 ###
@@ -143,25 +143,19 @@ q=x*y
 ###
 
 bath=crop(Bath.r,extent(xmin,xmax,ymin,ymax))
-## plot(bath)
-## points(loc.data.UTM$lon,loc.data.UTM$lat,cex=0.2,pch=16)
 
 ###
 ### Load Glacier Bay Sea Otter Data
 ###
 
 data=read.csv("~/Dropbox/Post-Doc/OriginalDataFiles/GLBA_noDots.csv")
-dataDistr=read.csv("~/Dropbox/Post-Doc/OriginalDataFiles/DistribSurveysC.csv")
+dataDistr=read.csv(paste("~/Dropbox/Post-Doc/OriginalDataFiles/",
+                         "DistribSurveysC.csv",
+                         sep=""))
 ind.pred.tmp=1:dim(dataDistr)[1]
 ind.pred=ind.pred.tmp[dataDistr$year==2004|dataDistr$year==2006]
 dataDistr=dataDistr[-ind.pred,]
 ind=1993:2012
-counts=numeric(20)
-for(i in 1:length(ind)){
-    dat=subset(dataDistr,dataDistr$year==ind[i])
-    counts[i]=sum(dat$animals,na.rm=TRUE)
-}
-counts
 
 ###
 ### Convert Data to Raster
@@ -210,7 +204,8 @@ for(t in years){
 ### Transects
 ###################################################################
 
-OrigData=read.csv("~/Dropbox/Post-Doc/OriginalDataFiles/GLBA_noDots.csv",header=TRUE)
+OrigData=read.csv("~/Dropbox/Post-Doc/OriginalDataFiles/GLBA_noDots.csv",
+                  header=TRUE)
 year=OrigData$year
 
 ###
@@ -788,6 +783,22 @@ Y.2006=ISU.data$ISU.Y[ISU.data$ISU.year==2006]
 N.2006=ISU.data$ISU.N[ISU.data$ISU.year==2006]
 Y.2012=ISU.data$ISU.Y[ISU.data$ISU.year==2012]
 N.2012=ISU.data$ISU.N[ISU.data$ISU.year==2012]
+ISU=list(Y.1999=Y.1999,
+         N.1999=N.1999,
+         Y.2000=Y.2000,
+         N.2000=N.2000,
+         Y.2001=Y.2001,
+         N.2001=N.2001,
+         Y.2002=Y.2002,
+         N.2002=N.2002,
+         Y.2003=Y.2003,
+         N.2003=N.2003,
+         Y.2004=Y.2004,
+         N.2004=N.2004,
+         Y.2006=Y.2006,
+         N.2006=N.2006,
+         Y.2012=Y.2012,
+         N.2012=N.2012)
 
 ###
 ### Create `Cell' raster
@@ -918,67 +929,80 @@ Y=c(Y.r[[1]][],
 #################################################
 #################################################
 
+
 ###
-### MCMC settings
+### Bundle data
 ###
 
-n.mcmc=200000
-checkpoint=100
+data=list(Y=Y,
+          ISU=ISU,
+          X=X)
+
+###
+### Spatio-temporal settings
+###
+
+dt=1/200
+time.frame=1993:2012
+us.fact=10
+res=400
+d=c(442000,6465000)
+xmin=404000
+xmax=460000
+ymin=6460000
+ymax=6528000
+extent=c(xmin,xmax,ymin,ymax)
+st.info=list(dt=dt,
+             time.frame=time.frame,
+             us.fact=us.fact,
+             res=res,
+             d=d,
+             extent=extent
+             )
+
+###
+### MCMC Settings
+###
+
+n.iter=100
+checkpoint=10
 
 ###
 ### Priors
 ###
 
-## Gamma
-q.gamma=0.01
-r.gamma=0.01
-
-## Beta
+## beta
 mu.beta=0
-sigma2.beta=10^2
+var.beta=10^2
 
-## Theta
+## gamma
+q.gamma=-0.5
+r.gamma=0.5
+
+## theta
 mu.theta=500
-sigma2.theta=500
+var.theta=500
 
 ## kappa
-mu.kappa=5
-sigma2.kappa=5
+mu.kappa=5.95
+var.kappa=5
 
-## detection probability
+## p
 q.p=1
 r.p=1
 
-## Overdispersion parameter
-l.odp.mn=log(2)
-l.odp.sd=log(3)
+## tau
+q.tau=0
+r.tau=1
 
-###
-### Temporal settings
-###
-
-dt=1/200
-time.frame=1993:2012
-time.steps=1/dt*length(time.frame)
-keep=seq(1,time.steps,time.steps/length(1993:2012))
-
-###
-### Spatial settings
-###
-
-us.fact=10
-dx=400*us.fact
-dy=400*us.fact
-
-###
-### Tuning parameters
-###
-
-gamma.tune=0.002
-beta.tune=c(0.1392345, 0.04616871, 0.1127799, 0.05642842, 0.03912024)
-theta.tune=40.81335
-kappa.tune=0.9653723
-odp.tune=0.02357948
+priors=list(
+    beta.prior=c(mu.beta,var.beta),
+    gamma.prior=c(q.gamma,r.gamma),
+    theta.prior=c(mu.theta,var.theta),
+    kappa.prior=c(mu.kappa,var.kappa),
+    p.prior=c(q.p,r.p),
+    tau.prior=c(q.tau,r.tau)
+)
 
 ###
 ### Starting values
@@ -1007,699 +1031,137 @@ p=c(rep(NA,6*q),
     rep(p.2006,q),
     rep(NA,q*5),
     rep(p.2012,q))
-odp=2
-delta[]=exp(X%*%beta)
-delta.star=delta
-delta.bar=aggregate(delta,fact=us.fact,
-                        fun=function(x,na.rm){
-                            (1/mean(1/x,na.rm=TRUE))
-                        })
-gamma.bar=delta.bar*aggregate(gamma/delta,
-                              fact=us.fact,
-                              fun=mean,
-                              na.rm=TRUE
-                              )
+odp=0.5
 
-NN=neighborhood(delta.bar,Boundary.us)
-
-H=propagator.plainZF(NN=NN,
-                     delta=delta.bar[],
-                     gamma=gamma.bar[],
-                     dx=dx,dy=dy,dt=dt)
-
-accept.gamma=0
-accept.beta=rep(0,length(beta))
-accept.theta=0
-accept.kappa=0
-accept.N=rep(0,length(Y))
-accept.odp=0
+inits=list(gamma=gamma,
+           beta=beta,
+           theta=theta,
+           kappa=kappa,
+           odp=odp,
+           p=p
+           )
 
 ###
-### Initial condition
+### Parameters to monitor
 ###
 
-D=rdist(data.frame(SpatialPoints(lambda0)),matrix(d,1,2))/1000
-us.cells=aggregate(cell,fact=us.fact,fun=mean)
-us.cells[]=1:length(us.cells[])
-lambda0[]=(exp(-D^2/kappa^2)/sum(exp(-D^2/kappa^2))*theta)
-lambda0.star=lambda0
-c0[]=extract(delta*lambda0,SpatialPoints(us.cells))
-c0.star=c0
+parameters=c("gamma",
+             "beta",
+             "kappa",
+             "theta",
+             "odp",
+             "p",
+             "n.tot")
 
 ###
-### c.all and lambda.all and N.all
+### Output location
 ###
 
-c.all=brick(nrows=dim(c0)[1], ncols=dim(c0)[2], xmn=xmin, xmx=xmax,
-            ymn=ymin, ymx=ymax)
-c.all=setValues(c.all, calcc(H, vec(c0[]),time.steps)[,keep])
-lambda=vec(disaggregate(c.all,us.fact)/delta)
-N=rnbinom(length(lambda),size=odp,,mu=lambda)
-N=ifelse(N<Y,Y,N)
+output.location="~/GB_DataAnalysis.RData"
+
+Bathymetry=bath
+rm(list=ls()[!ls() %in% c("data",
+                          "priors",
+                          "inits",
+                          "parameters",
+                          "st.info",
+                          "Bathymetry",
+                          "n.iter",
+                          "checkpoint",
+                          "output.location")])
 
 ###
-### Results objects
+### Run MCMC
 ###
 
-gamma.save=rep(NA,n.mcmc)
-gamma.tune.save=rep(NA,n.mcmc)
-beta.save=matrix(NA,n.mcmc,length(beta))
-beta.tune.save=matrix(NA,n.mcmc,length(beta))
-theta.save=rep(NA,n.mcmc)
-theta.tune.save=rep(NA,n.mcmc)
-kappa.save=rep(NA,n.mcmc)
-kappa.tune.save=rep(NA,n.mcmc)
-p.save=matrix(NA,n.mcmc,8)
-odp.save=rep(NA,n.mcmc)
-odp.tune.save=rep(NA,n.mcmc)
-n.tot.save=matrix(NA,n.mcmc,20)
+script=getURL(
+    paste("https://raw.githubusercontent.com/perrywilliams/",
+          "GlacierBay-SeaOtter-Analysis/master/MCMC.R",sep=""),
+    ssl.verifypeer=FALSE)
+eval(parse(text = script))
 
-###
-### Begin MCMC loop
-###
+## source(paste("~/Dropbox/GitHub/GlacierBay-SeaOtter-Analysis/",
+##              "GlacierBay-SeaOtter-Analysis/MCMC.R",sep=""))
 
-for(k in 1:n.mcmc){
+MCMC(data,
+     priors,
+     inits,
+     parameters,
+     st.info,
+     Bathymetry,
+     n.iter=n.iter,
+     checkpoint=checkpoint,
+     output.location)
 
-    ##
-    ## Sample gamma
-    ##
 
-    gamma.star=rnorm(n=1,mean=gamma,sd=gamma.tune)
-    if(gamma.star>0){
-        gamma.bar.star=delta.bar*aggregate(gamma.star/delta,
-                                           fact=us.fact,fun=function(x,na.rm){
-                                               mean(x,na.rm=TRUE)
-                                           })
-        H.star=propagator.plainZF(NN,delta.bar[],gamma.bar.star[],
-                                  dx=dx,dy=dy,dt=dt)
-        if(min(range(H.star,na.rm=TRUE))>=0){
-            c.all.star=setValues(c.all,calcc(H.star,vec(c0[]),time.steps)[,keep])
-            lambda.star=vec(disaggregate(c.all.star,us.fact)/delta)
-            mh1=sum(dnbinom(x=N,size=odp,,mu=lambda.star,log=TRUE),na.rm=TRUE)+
-                sum(dbeta(gamma.star,q.gamma,r.gamma,log=TRUE))
-            mh2=sum(dnbinom(x=N,size=odp,,mu=lambda,log=TRUE),na.rm=TRUE)+
-                sum(dbeta(gamma,q.gamma,r.gamma,log=TRUE))
-            mh=exp(mh1-mh2)
-            if(mh>runif(1)){
-                gamma=gamma.star
-                gamma.bar=gamma.bar.star
-                H=H.star
-                c.all=c.all.star
-                lambda=lambda.star
-                accept.gamma=accept.gamma+1
-            }
-        }
-    }
-
-    ##
-    ## Sample beta0
-    ##
-
-    beta0.star=rnorm(1,mean=beta[1],sd=beta.tune[1])
-    beta.star=c(beta0.star,beta[2:5])
-    delta.star[]=exp(X%*%beta.star)
-    delta.bar.star=aggregate(delta.star,
-                             fact=us.fact,
-                             fun=function(x,na.rm){
-                                 (1/mean(1/x,na.rm=TRUE))
-                             }
-                             )
-    gamma.bar.star=delta.bar.star*aggregate(gamma/delta.star,
-                                            fact=us.fact,fun=function(x,na.rm){
-                                                mean(x,na.rm=TRUE)
-                                            })
-    H.star=propagator.plainZF(NN,delta.bar.star[],gamma.bar.star[],
-                                  dx=dx,dy=dy,dt=dt)
-    if(min(H.star,na.rm=TRUE)>=0){
-        c0.star[]=extract(delta.star*lambda0,
-                        SpatialPoints(us.cells))
-        c.all.star=setValues(c.all,calcc(H.star,vec(c0.star[]),time.steps)[,keep])
-        lambda.star=vec(disaggregate(c.all.star,us.fact)/delta.star)
-        mh1=sum(dnbinom(x=N,size=odp,,mu=lambda.star,log=TRUE),na.rm=TRUE)+
-            sum(dnorm(beta.star,mu.beta,sigma2.beta^0.5,log=TRUE))
-        mh2=sum(dnbinom(x=N,size=odp,,mu=lambda,log=TRUE),na.rm=TRUE)+
-            sum(dnorm(beta,mu.beta,sigma2.beta^0.5,log=TRUE))
-        mh=exp(mh1-mh2)
-        if(mh>runif(1)){
-            beta=beta.star
-            delta=delta.star
-            delta.bar=delta.bar.star
-            gamma.bar=gamma.bar.star
-            H=H.star
-            c0=c0.star
-            c.all=c.all.star
-            lambda=lambda.star
-            accept.beta[1]=accept.beta[1]+1
-        }
-    }
-
-    ##
-    ## Sample beta1
-    ##
-
-    beta1.star=rnorm(1,mean=beta[2],sd=beta.tune[2])
-    beta.star=c(beta[1],beta1.star,beta[3:5])
-    delta.star[]=exp(X%*%beta.star)
-    delta.bar.star=aggregate(delta.star,
-                             fact=us.fact,
-                             fun=function(x,na.rm){
-                                 (1/mean(1/x,na.rm=TRUE))
-                             }
-                             )
-    gamma.bar.star=delta.bar.star*aggregate(gamma/delta.star,
-                                            fact=us.fact,fun=function(x,na.rm){
-                                                mean(x,na.rm=TRUE)
-                                            })
-    H.star=propagator.plainZF(NN,delta.bar.star[],gamma.bar.star[],
-                                  dx=dx,dy=dy,dt=dt)
-    if(min(H.star,na.rm=TRUE)>=0){
-        c0.star[]=extract(delta.star*lambda0,
-                        SpatialPoints(us.cells))
-        c.all.star=setValues(c.all,calcc(H.star,vec(c0.star[]),time.steps)[,keep])
-        lambda.star=vec(disaggregate(c.all.star,us.fact)/delta.star)
-        mh1=sum(dnbinom(x=N,size=odp,,mu=lambda.star,log=TRUE),na.rm=TRUE)+
-            sum(dnorm(beta.star,mu.beta,sigma2.beta^0.5,log=TRUE))
-        mh2=sum(dnbinom(x=N,size=odp,,mu=lambda,log=TRUE),na.rm=TRUE)+
-            sum(dnorm(beta,mu.beta,sigma2.beta^0.5,log=TRUE))
-        mh=exp(mh1-mh2)
-        if(mh>runif(1)){
-            beta=beta.star
-            delta=delta.star
-            delta.bar=delta.bar.star
-            gamma.bar=gamma.bar.star
-            H=H.star
-            c0=c0.star
-            c.all=c.all.star
-            lambda=lambda.star
-            accept.beta[2]=accept.beta[2]+1
-        }
-    }
-
-    ##
-    ## Sample beta2
-    ##
-
-    beta2.star=rnorm(1,mean=beta[3],sd=beta.tune[3])
-    beta.star=c(beta[1:2],beta2.star,beta[4:5])
-    delta.star[]=exp(X%*%beta.star)
-    delta.bar.star=aggregate(delta.star,
-                             fact=us.fact,
-                             fun=function(x,na.rm){
-                                 (1/mean(1/x,na.rm=TRUE))
-                             }
-                             )
-    gamma.bar.star=delta.bar.star*aggregate(gamma/delta.star,
-                                            fact=us.fact,fun=function(x,na.rm){
-                                                mean(x,na.rm=TRUE)
-                                            })
-    H.star=propagator.plainZF(NN,delta.bar.star[],gamma.bar.star[],
-                                  dx=dx,dy=dy,dt=dt)
-    if(min(H.star,na.rm=TRUE)>=0){
-        c0.star[]=extract(delta.star*lambda0,
-                        SpatialPoints(us.cells))
-        c.all.star=setValues(c.all,calcc(H.star,vec(c0.star[]),time.steps)[,keep])
-        lambda.star=vec(disaggregate(c.all.star,us.fact)/delta.star)
-        mh1=sum(dnbinom(x=N,size=odp,,mu=lambda.star,log=TRUE),na.rm=TRUE)+
-            sum(dnorm(beta.star,mu.beta,sigma2.beta^0.5,log=TRUE))
-        mh2=sum(dnbinom(x=N,size=odp,,mu=lambda,log=TRUE),na.rm=TRUE)+
-            sum(dnorm(beta,mu.beta,sigma2.beta^0.5,log=TRUE))
-        mh=exp(mh1-mh2)
-        if(mh>runif(1)){
-            beta=beta.star
-            delta=delta.star
-            delta.bar=delta.bar.star
-            gamma.bar=gamma.bar.star
-            H=H.star
-            c0=c0.star
-            c.all=c.all.star
-            lambda=lambda.star
-            accept.beta[3]=accept.beta[3]+1
-        }
-    }
-
-    ##
-    ## Sample beta3
-    ##
-
-    beta3.star=rnorm(1,mean=beta[4],sd=beta.tune[4])
-    beta.star=c(beta[1:3],beta3.star,beta[5])
-    delta.star[]=exp(X%*%beta.star)
-    delta.bar.star=aggregate(delta.star,
-                             fact=us.fact,
-                             fun=function(x,na.rm){
-                                 (1/mean(1/x,na.rm=TRUE))
-                             }
-                             )
-    gamma.bar.star=delta.bar.star*aggregate(gamma/delta.star,
-                                            fact=us.fact,fun=function(x,na.rm){
-                                                mean(x,na.rm=TRUE)
-                                            })
-    H.star=propagator.plainZF(NN,delta.bar.star[],gamma.bar.star[],
-                                  dx=dx,dy=dy,dt=dt)
-    if(min(H.star,na.rm=TRUE)>=0){
-        c0.star[]=extract(delta.star*lambda0,
-                        SpatialPoints(us.cells))
-        c.all.star=setValues(c.all,calcc(H.star,vec(c0.star[]),time.steps)[,keep])
-        lambda.star=vec(disaggregate(c.all.star,us.fact)/delta.star)
-        mh1=sum(dnbinom(x=N,size=odp,,mu=lambda.star,log=TRUE),na.rm=TRUE)+
-            sum(dnorm(beta.star,mu.beta,sigma2.beta^0.5,log=TRUE))
-        mh2=sum(dnbinom(x=N,size=odp,,mu=lambda,log=TRUE),na.rm=TRUE)+
-            sum(dnorm(beta,mu.beta,sigma2.beta^0.5,log=TRUE))
-        mh=exp(mh1-mh2)
-        if(mh>runif(1)){
-            beta=beta.star
-            delta=delta.star
-            delta.bar=delta.bar.star
-            gamma.bar=gamma.bar.star
-            H=H.star
-            c0=c0.star
-            c.all=c.all.star
-            lambda=lambda.star
-            accept.beta[4]=accept.beta[4]+1
-        }
-    }
-
-    ##
-    ## Sample beta4
-    ##
-
-    beta4.star=rnorm(1,mean=beta[5],sd=beta.tune[5])
-    beta.star=c(beta[1:4],beta4.star)
-    delta.star[]=exp(X%*%beta.star)
-    delta.bar.star=aggregate(delta.star,
-                             fact=us.fact,
-                             fun=function(x,na.rm){
-                                 (1/mean(1/x,na.rm=TRUE))
-                             }
-                             )
-    gamma.bar.star=delta.bar.star*aggregate(gamma/delta.star,
-                                            fact=us.fact,fun=function(x,na.rm){
-                                                mean(x,na.rm=TRUE)
-                                            })
-    H.star=propagator.plainZF(NN,delta.bar.star[],gamma.bar.star[],
-                                  dx=dx,dy=dy,dt=dt)
-    if(min(H.star,na.rm=TRUE)>=0){
-        c0.star[]=extract(delta.star*lambda0,
-                        SpatialPoints(us.cells))
-        c.all.star=setValues(c.all,calcc(H.star,vec(c0.star[]),time.steps)[,keep])
-        lambda.star=vec(disaggregate(c.all.star,us.fact)/delta.star)
-        mh1=sum(dnbinom(x=N,size=odp,,mu=lambda.star,log=TRUE),na.rm=TRUE)+
-            sum(dnorm(beta.star,mu.beta,sigma2.beta^0.5,log=TRUE))
-        mh2=sum(dnbinom(x=N,size=odp,,mu=lambda,log=TRUE),na.rm=TRUE)+
-            sum(dnorm(beta,mu.beta,sigma2.beta^0.5,log=TRUE))
-        mh=exp(mh1-mh2)
-        if(mh>runif(1)){
-            beta=beta.star
-            delta=delta.star
-            delta.bar=delta.bar.star
-            gamma.bar=gamma.bar.star
-            H=H.star
-            c0=c0.star
-            c.all=c.all.star
-            lambda=lambda.star
-            accept.beta[5]=accept.beta[5]+1
-        }
-    }
-
-    ##
-    ## Sample theta
-    ##
-
-    theta.star=rnorm(1,theta,theta.tune)
-    if(theta.star>0){
-        lambda0.star[]=exp(-D^2/kappa^2)/sum(exp(-D^2/kappa^2))*theta.star
-        c0.star=extract(delta*lambda0.star,
-                        SpatialPoints(us.cells))
-        c.all.star=setValues(c.all,calcc(H,vec(c0.star[]),time.steps)[,keep])
-        lambda.star=vec(disaggregate(c.all.star,us.fact)/delta)
-        mh1=sum(dnbinom(x=N,size=odp,,mu=lambda.star,log=TRUE),na.rm=TRUE)+
-            dnorm(theta.star,mu.theta,sigma2.theta^0.5,log=TRUE)
-        mh2=sum(dnbinom(x=N,size=odp,,mu=lambda,log=TRUE),na.rm=TRUE)+
-            dnorm(theta,mu.theta,sigma2.theta^0.5,log=TRUE)
-        mh=exp(mh1-mh2)
-        if(mh>runif(1)){
-            theta=theta.star
-            lambda0=lambda0.star
-            c0=c0.star
-            c.all=c.all.star
-            lambda=lambda.star
-            accept.theta=accept.theta+1
-        }
-    }
-
-    ##
-    ## Sample kappa
-    ##
-
-    kappa.star=rnorm(1,kappa,kappa.tune)
-    if(kappa.star>0){
-        lambda0.star[]=exp(-D^2/kappa.star^2)/sum(exp(-D^2/kappa.star^2))*theta
-        c0.star=extract(delta*lambda0.star,
-                        SpatialPoints(us.cells))
-        c.all.star=setValues(c.all,calcc(H,vec(c0.star[]),time.steps)[,keep])
-        lambda.star=vec(disaggregate(c.all.star,us.fact)/delta)
-        mh1=sum(dnbinom(x=N,size=odp,,mu=lambda.star,log=TRUE),na.rm=TRUE)+
-            dnorm(kappa.star,mu.kappa,sigma2.kappa^0.5,log=TRUE)
-        mh2=sum(dnbinom(x=N,size=odp,,mu=lambda,log=TRUE),na.rm=TRUE)+
-            dnorm(kappa,mu.kappa,sigma2.kappa^0.5,log=TRUE)
-        mh=exp(mh1-mh2)
-        if(mh>runif(1)){
-            kappa=kappa.star
-            lambda0=lambda0.star
-            c0=c0.star
-            c.all=c.all.star
-            lambda=lambda.star
-            accept.kappa=accept.kappa+1
-        }
-    }
-
-    ##
-    ## Sample N
-    ##
-
-    N.star=sample(-1:1,length(N),replace=TRUE)+N
-    N.star=ifelse(N.star<0,0,N.star)
-    mh1=dbinom(x=Y,size=N.star,prob=p,log=TRUE)+
-        dnbinom(x=N.star,size=odp,,mu=lambda,log=TRUE)
-    mh2=dbinom(x=Y,size=N,prob=p,log=TRUE)+
-        dnbinom(x=N,size=odp,,mu=lambda,log=TRUE)
-    mh=exp(mh1-mh2)
-    ru.tmp=runif(length(mh))
-    N=ifelse(mh>ru.tmp,
-             N.star,
-             N)
-    accept.N=ifelse(mh>ru.tmp,
-                    accept.N+1,
-                    accept.N)
-
-    ##
-    ## Sample odp
-    ##
-
-    odp.star=exp(rnorm(1,log(odp),odp.tune))
-    mh1=sum(dnbinom(x=N,size=odp.star,,mu=lambda,log=TRUE),na.rm=TRUE)+
-        dnorm(log(odp.star),l.odp.mn,l.odp.sd,log=TRUE)
-    mh2=sum(dnbinom(x=N,size=odp,,mu=lambda,log=TRUE),na.rm=TRUE)+
-        dnorm(log(odp),l.odp.mn,l.odp.sd,log=TRUE)
-    mh=exp(mh1-mh2)
-    if(mh>runif(1)){
-        odp=odp.star
-        accept.odp=accept.odp+1
-    }
-
-    ##
-    ## Sample p
-    ##
-
-    p.1999=rbeta(1,sum(Y.1999)+
-                   q.p,sum(N.1999-Y.1999)+r.p)
-    p.2000=rbeta(1,sum(Y.2000)+
-                   q.p,sum(N.2000-Y.2000)+r.p)
-    p.2001=rbeta(1,sum(Y.2001)+
-                   q.p,sum(N.2001-Y.2001)+r.p)
-    p.2002=rbeta(1,sum(Y.2002)+
-                   q.p,sum(N.2002-Y.2002)+r.p)
-    p.2003=rbeta(1,sum(Y.2003)+
-                   q.p,sum(N.2003-Y.2003)+r.p)
-    p.2004=rbeta(1,sum(Y.2004)+
-                   q.p,sum(N.2004-Y.2004)+r.p)
-    p.2006=rbeta(1,sum(Y.2006)+
-                   q.p,sum(N.2006-Y.2006)+r.p)
-    p.2012=rbeta(1,sum(Y.2012)+
-                   q.p,sum(N.2012-Y.2012)+r.p)
-    p=c(rep(NA,6*q),
-        rep(p.1999,q),
-        rep(p.2000,q),
-        rep(p.2001,q),
-        rep(p.2002,q),
-        rep(p.2003,q),
-        rep(p.2004,q),
-        rep(NA,q),
-        rep(p.2006,q),
-        rep(NA,q*5),
-        rep(p.2012,q))
-
-    ##
-    ## Derived parameters
-    ##
-
-    n.tot.v=rnbinom(n=length(lambda),size=odp,,mu=lambda*BoundaryInf.v)
-    n.tot=unname(tapply(n.tot.v,(seq_along(n.tot.v)-1)%/%q,sum,na.rm=TRUE))
-
-    ##
-    ## Store results
-    ##
-
-    ## parameters
-    gamma.save[k]=gamma
-    beta.save[k,]=beta
-    theta.save[k]=theta
-    kappa.save[k]=kappa
-    odp.save[k]=odp
-    p.save[k,]=c(p.1999,p.2000,p.2001,p.2002,p.2003,p.2004,p.2006,p.2012)
-    n.tot.save[k,]=n.tot
-
-    ## tuners
-    gamma.tune.save[k]=gamma.tune
-    beta.tune.save[k,]=beta.tune
-    theta.tune.save[k]=theta.tune
-    kappa.tune.save[k]=kappa.tune
-    odp.tune.save[k]=odp.tune
-
-    ##
-    ## Checkpoint
-    ##
-
-    if(k%%checkpoint==0){
-
-        ##
-        ## Update tuning parameters
-        ##
-
-        if(accept.gamma/k<0.3){
-            gamma.tune=gamma.tune*0.9
-        }
-        if(accept.gamma/k>0.5){
-            gamma.tune=gamma.tune*1.1
-        }
-
-        beta.tune=ifelse(accept.beta/k<0.3,
-                         beta.tune*0.9,
-                  ifelse(accept.beta/k>0.5,
-                         beta.tune*1.1,
-                         beta.tune))
-
-        if(accept.theta/k<0.3){
-            theta.tune=theta.tune*0.9
-        }
-        if(accept.theta/k>0.5){
-            theta.tune=theta.tune*1.1
-        }
-
-        if(accept.kappa/k<0.3){
-            kappa.tune=kappa.tune*0.9
-        }
-        if(accept.kappa/k>0.5){
-            kappa.tune=kappa.tune*1.1
-        }
-
-        if(accept.odp/k<0.3){
-            odp.tune=odp.tune*0.9
-        }
-        if(accept.odp/k>0.5){
-            odp.tune=odp.tune*1.1
-        }
-
-        ##
-        ## Save to list
-        ##
-
-        out=list(gamma.save,
-                 beta.save,
-                 gamma.tune.save,
-                 beta.tune.save,
-                 theta.save,
-                 theta.tune.save,
-                 kappa.save,
-                 kappa.tune.save,
-                 accept.N,
-                 odp.save,
-                 odp.tune.save,
-                 p.save,
-                 n.tot.save
-                 )
-        save(out,file=paste("~/Dropbox/Post-Doc/manuscripts/",
-                            "SeaOtterEcology/DandD/Revision/",
-                            "MCMCNBRealDataResults1.RData",
-                            sep=""))
-        cat(k,"")
-    }
-
-###
-### End MCMC
-###
-
-}
 
 ############################################################################
-###
-### Results Files:
-###        MCMCNBRealDataResults1.RData (12 Feb 2018): All parameters (worked)
-###
+### Load MCMC results
 ############################################################################
 
-###
-### Load MCMC resullts
-###
-
-load(paste("~/Dropbox/Post-Doc/manuscripts/",
-           "SeaOtterEcology/DandD/Revision/",
-           "MCMCNBRealDataResults1.RData",
-           sep=""))
-
-(status=sum(!is.na(out[[1]])))
+rm(list=ls())
+output.location="~/GB_DataAnalysis.RData"
+load(output.location)
+(status=sum(!is.na(MCMC.Chains[[3]])))
 
 ###
-### Plot growth rate parameters and tuning values
+### Extract parameters
 ###
 
-par(mfrow=c(1,2))
-gamma.est=out[[1]][1:status]
-mean(gamma.est)
+gamma.est=MCMC.Chains$gamma[1:status]
+beta.est=MCMC.Chains$beta[1:status,]
+theta.est=MCMC.Chains$theta[1:status]
+kappa.est=MCMC.Chains$kappa[1:status]
+odp.est=MCMC.Chains$odp[1:status]
+
+###
+### Plot parameters
+###
+
+par(mfrow=c(5,2),mar=c(4,4,1,1))
 plot(gamma.est,type='l',ylim=c(0.15,0.25))
 abline(h=0.2,col=2)
-gamma.tune.save=out[[3]][1:status]
-plot(gamma.tune.save,type='l')
-## tail(gamma.tune.save)
-
-###
-### Plot motility parameters and tuning values
-###
-
-par(mfrow=c(5,2),mar=c(2,4,1,1))
-beta0=17.72
-beta1=-1.48
-beta2=0.77
-beta3=-0.35
-beta4=1.0
-
-beta.est=out[[2]][1:status,]
-mean(beta.est[,1])
 plot(beta.est[,1],type='l')
 abline(h=beta0,col=2)
-beta.tune.save=out[[4]][1:status,]
-plot(beta.tune.save[,1],type='l')
-
-mean(beta.est[,2])
 plot(beta.est[,2],type='l')
 abline(h=beta1,col=2)
-plot(beta.tune.save[,2],type='l')
-
-mean(beta.est[,3])
 plot(beta.est[,3],type='l')
 abline(h=beta2,col=2)
-plot(beta.tune.save[,3],type='l')
-
-mean(beta.est[,4])
 plot(beta.est[,4],type='l')
 abline(h=beta3,col=2)
-plot(beta.tune.save[,4],type='l')
-
-mean(beta.est[,5])
 plot(beta.est[,5],type='l')
 abline(h=beta4,col=2)
-plot(beta.tune.save[,5],type='l')
-## tail(beta.tune.save)
-
-###
-### Plot initial conditions
-###
-
-## Theta
-par(mfrow=c(2,2),mar=c(4,3,1,1))
-theta.est=out[[5]][1:status]
-mean(theta.est)
 plot(theta.est,type='l')
 abline(h=500,col=2)
-theta.tune.save=out[[6]][1:status]
-plot(theta.tune.save,type='l')
-## tail(theta.tune.save)
-
-## Kappa
-kappa.est=out[[7]][1:status]
-mean(kappa.est)
 plot(kappa.est,type='l')
 abline(h=5.95,col=2)
-kappa.tune.save=out[[8]][1:status]
-plot(kappa.tune.save,type='l')
-## tail(kappa.tune.save)
-
-###
-### Plot overdispersion parameter
-###
-
-odp.est=out[[10]][1:status]
-mean(odp.est)
-plot(odp.est,type='l',ylim=c(0,0.1))
-abline(h=2,col=2)
-odp.tune.save=out[[11]][1:status]
-plot(odp.tune.save,type='l')
-## tail(odp.tune.save)
+plot(odp.est,type='l')
+abline(h=0.5,col=2)
 
 ###
 ### Calculate abundance
 ###
 
-N.est=out[[13]][1:status,]
+N.est=MCMC.Chains$n.tot[1:status,]
 mean.n=apply(N.est,2,mean,na.rm=TRUE)
 lb.n=apply(N.est,2,quantile,0.025)
 ub.n=apply(N.est,2,quantile,0.975)
 cbind(lb.n,mean.n,ub.n)
 
-par(mfrow=c(1,1))
-plot(1993:2012,mean.n,pch=16,ylim=c(0,15000))
-segments(x0=1993:2012,
-         y0=mean.n,
-         x1=1993:2012,
-         y1=lb.n)
-segments(x0=1993:2012,
-         y0=mean.n,
-         x1=1993:2012,
-         y1=ub.n)
-
-counts[counts==0]=NA
-points(1993:2012,counts,col=4,pch=16)
-dbe=c(NA,NA,NA,NA,NA,NA,384,554,1238,1266,1866,2381,NA,2785,NA,NA,NA,NA,NA,8508)
-dbeSE=c(NA,NA,NA,NA,NA,NA,111,97,143,196,458,594,NA,361,NA,NA,NA,NA,NA,2243)
-dbelq=dbe+2*dbeSE
-dbeuq=dbe-2*dbeSE
-offs=0.1
-points(1993:2012+offs,dbe,pch=16,col=2)
-segments(x0=1993:2012+offs,
-         y0=dbe,
-         x1=1993:2012+offs,
-         y1=dbelq,col=2)
-segments(x0=1993:2012+offs,
-         y0=dbe,
-         x1=1993:2012+offs,
-         y1=dbeuq,col=2)
-
 ###
-### Calculate p
+### Plot abundance
 ###
 
-p.1999=0.7953388
-p.2000=0.75
-p.2001=0.8583887
-p.2002=0.8503951
-p.2003=0.7606767
-p.2004=0.7694584
-p.2006=0.7470478
-p.2012=0.5833859
-p.truth=c(p.1999,p.2000,p.2001,p.2002,p.2003,p.2004,p.2006,p.2012)
+par(mfrow=c(5,4),mar=c(2,2,0,1))
+for(i in 1:20){
+    plot(N.est[,i],type='l')
+}
 
-p.est=out[[12]][1:status,]
+###
+### Plot p
+###
+
+p.est=MCMC.Chains$p[1:status,]
 for(i in 1:8){
     plot(p.est[,i],type='l');abline(h=p.truth[i],col=2)
-    readline()
 }
