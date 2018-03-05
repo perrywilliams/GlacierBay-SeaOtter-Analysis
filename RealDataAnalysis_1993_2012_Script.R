@@ -964,7 +964,7 @@ st.info=list(dt=dt,
 ### MCMC Settings
 ###
 
-n.iter=100
+n.iter=50000
 checkpoint=10
 
 ###

@@ -1,0 +1,1240 @@
+
+R version 3.3.2 (2016-10-31) -- "Sincere Pumpkin Patch"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin13.4.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> rm(list=ls())
+> 
+> ##################################################################
+> ###
+> ### Glacier Bay sea otter analysis script
+> ###
+> ##################################################################
+> 
+> 
+> ###
+> ### Packages and dependencies
+> ###
+> 
+> required.packages=c("coda",
++                     "fBasics",
++                     "fields",
++                     "ggmap",
++                     "ggplot2",
++                     "gridExtra",
++                     "gstat",
++                     "inline",
++                     "maptools",
++                     "raster",
++                     "rasterVis",
++                     "RColorBrewer",
++                     "RcppArmadillo",
++                     "rgdal",
++                     "rgeos")
+> ## install.packages(required.packages)
+> lapply(required.packages,library,character.only=TRUE)
+Loading required package: timeDate
+Loading required package: timeSeries
+
+
+Rmetrics Package fBasics
+Analysing Markets and calculating Basic Statistics
+Copyright (C) 2005-2014 Rmetrics Association Zurich
+Educational Software for Financial Engineering and Computational Science
+Rmetrics is free software and comes with ABSOLUTELY NO WARRANTY.
+https://www.rmetrics.org --- Mail to: info@rmetrics.org
+Loading required package: spam
+Loading required package: dotCall64
+Loading required package: grid
+Spam version 2.1-2 (2017-12-21) is loaded.
+Type 'help( Spam)' or 'demo( spam)' for a short introduction 
+and overview of this package.
+Help for individual functions is also obtained by adding the
+suffix '.spam' to the function name, e.g. 'help( chol.spam)'.
+
+Attaching package: ‘spam’
+
+The following objects are masked from ‘package:base’:
+
+    backsolve, forwardsolve
+
+Loading required package: maps
+Loading required package: ggplot2
+Google Maps API Terms of Service: http://developers.google.com/maps/terms.
+Please cite ggmap if you use it: see citation("ggmap") for details.
+Loading required package: sp
+Checking rgeos availability: TRUE
+Loading required package: lattice
+Loading required package: latticeExtra
+Loading required package: RColorBrewer
+
+Attaching package: ‘latticeExtra’
+
+The following object is masked from ‘package:ggplot2’:
+
+    layer
+
+rgdal: version: 1.2-5, (SVN revision 648)
+ Geospatial Data Abstraction Library extensions to R successfully loaded
+ Loaded GDAL runtime: GDAL 2.1.2, released 2016/10/24
+ Path to GDAL shared files: /Library/Frameworks/R.framework/Versions/3.3/Resources/library/rgdal/gdal
+ Loaded PROJ.4 runtime: Rel. 4.9.1, 04 March 2015, [PJ_VERSION: 491]
+ Path to PROJ.4 shared files: /Library/Frameworks/R.framework/Versions/3.3/Resources/library/rgdal/proj
+ Linking to sp version: 1.2-4 
+
+Attaching package: ‘rgdal’
+
+The following object is masked from ‘package:fBasics’:
+
+    getDescription
+
+rgeos version: 0.3-26, (SVN revision 560)
+ GEOS runtime version: 3.4.2-CAPI-1.8.2 r3921 
+ Linking to sp version: 1.2-5 
+ Polygon checking: TRUE 
+
+[[1]]
+[1] "coda"      "stats"     "graphics"  "grDevices" "utils"     "datasets" 
+[7] "methods"   "base"     
+
+[[2]]
+ [1] "fBasics"    "timeSeries" "timeDate"   "coda"       "stats"     
+ [6] "graphics"   "grDevices"  "utils"      "datasets"   "methods"   
+[11] "base"      
+
+[[3]]
+ [1] "fields"     "maps"       "spam"       "grid"       "dotCall64" 
+ [6] "fBasics"    "timeSeries" "timeDate"   "coda"       "stats"     
+[11] "graphics"   "grDevices"  "utils"      "datasets"   "methods"   
+[16] "base"      
+
+[[4]]
+ [1] "ggmap"      "ggplot2"    "fields"     "maps"       "spam"      
+ [6] "grid"       "dotCall64"  "fBasics"    "timeSeries" "timeDate"  
+[11] "coda"       "stats"      "graphics"   "grDevices"  "utils"     
+[16] "datasets"   "methods"    "base"      
+
+[[5]]
+ [1] "ggmap"      "ggplot2"    "fields"     "maps"       "spam"      
+ [6] "grid"       "dotCall64"  "fBasics"    "timeSeries" "timeDate"  
+[11] "coda"       "stats"      "graphics"   "grDevices"  "utils"     
+[16] "datasets"   "methods"    "base"      
+
+[[6]]
+ [1] "gridExtra"  "ggmap"      "ggplot2"    "fields"     "maps"      
+ [6] "spam"       "grid"       "dotCall64"  "fBasics"    "timeSeries"
+[11] "timeDate"   "coda"       "stats"      "graphics"   "grDevices" 
+[16] "utils"      "datasets"   "methods"    "base"      
+
+[[7]]
+ [1] "gstat"      "gridExtra"  "ggmap"      "ggplot2"    "fields"    
+ [6] "maps"       "spam"       "grid"       "dotCall64"  "fBasics"   
+[11] "timeSeries" "timeDate"   "coda"       "stats"      "graphics"  
+[16] "grDevices"  "utils"      "datasets"   "methods"    "base"      
+
+[[8]]
+ [1] "inline"     "gstat"      "gridExtra"  "ggmap"      "ggplot2"   
+ [6] "fields"     "maps"       "spam"       "grid"       "dotCall64" 
+[11] "fBasics"    "timeSeries" "timeDate"   "coda"       "stats"     
+[16] "graphics"   "grDevices"  "utils"      "datasets"   "methods"   
+[21] "base"      
+
+[[9]]
+ [1] "maptools"   "sp"         "inline"     "gstat"      "gridExtra" 
+ [6] "ggmap"      "ggplot2"    "fields"     "maps"       "spam"      
+[11] "grid"       "dotCall64"  "fBasics"    "timeSeries" "timeDate"  
+[16] "coda"       "stats"      "graphics"   "grDevices"  "utils"     
+[21] "datasets"   "methods"    "base"      
+
+[[10]]
+ [1] "raster"     "maptools"   "sp"         "inline"     "gstat"     
+ [6] "gridExtra"  "ggmap"      "ggplot2"    "fields"     "maps"      
+[11] "spam"       "grid"       "dotCall64"  "fBasics"    "timeSeries"
+[16] "timeDate"   "coda"       "stats"      "graphics"   "grDevices" 
+[21] "utils"      "datasets"   "methods"    "base"      
+
+[[11]]
+ [1] "rasterVis"    "latticeExtra" "RColorBrewer" "lattice"      "raster"      
+ [6] "maptools"     "sp"           "inline"       "gstat"        "gridExtra"   
+[11] "ggmap"        "ggplot2"      "fields"       "maps"         "spam"        
+[16] "grid"         "dotCall64"    "fBasics"      "timeSeries"   "timeDate"    
+[21] "coda"         "stats"        "graphics"     "grDevices"    "utils"       
+[26] "datasets"     "methods"      "base"        
+
+[[12]]
+ [1] "rasterVis"    "latticeExtra" "RColorBrewer" "lattice"      "raster"      
+ [6] "maptools"     "sp"           "inline"       "gstat"        "gridExtra"   
+[11] "ggmap"        "ggplot2"      "fields"       "maps"         "spam"        
+[16] "grid"         "dotCall64"    "fBasics"      "timeSeries"   "timeDate"    
+[21] "coda"         "stats"        "graphics"     "grDevices"    "utils"       
+[26] "datasets"     "methods"      "base"        
+
+[[13]]
+ [1] "RcppArmadillo" "rasterVis"     "latticeExtra"  "RColorBrewer" 
+ [5] "lattice"       "raster"        "maptools"      "sp"           
+ [9] "inline"        "gstat"         "gridExtra"     "ggmap"        
+[13] "ggplot2"       "fields"        "maps"          "spam"         
+[17] "grid"          "dotCall64"     "fBasics"       "timeSeries"   
+[21] "timeDate"      "coda"          "stats"         "graphics"     
+[25] "grDevices"     "utils"         "datasets"      "methods"      
+[29] "base"         
+
+[[14]]
+ [1] "rgdal"         "RcppArmadillo" "rasterVis"     "latticeExtra" 
+ [5] "RColorBrewer"  "lattice"       "raster"        "maptools"     
+ [9] "sp"            "inline"        "gstat"         "gridExtra"    
+[13] "ggmap"         "ggplot2"       "fields"        "maps"         
+[17] "spam"          "grid"          "dotCall64"     "fBasics"      
+[21] "timeSeries"    "timeDate"      "coda"          "stats"        
+[25] "graphics"      "grDevices"     "utils"         "datasets"     
+[29] "methods"       "base"         
+
+[[15]]
+ [1] "rgeos"         "rgdal"         "RcppArmadillo" "rasterVis"    
+ [5] "latticeExtra"  "RColorBrewer"  "lattice"       "raster"       
+ [9] "maptools"      "sp"            "inline"        "gstat"        
+[13] "gridExtra"     "ggmap"         "ggplot2"       "fields"       
+[17] "maps"          "spam"          "grid"          "dotCall64"    
+[21] "fBasics"       "timeSeries"    "timeDate"      "coda"         
+[25] "stats"         "graphics"      "grDevices"     "utils"        
+[29] "datasets"      "methods"       "base"         
+
+Warning message:
+In as.POSIXlt.POSIXct(Sys.time()) :
+  unknown timezone 'zone/tz/2018c.1.0/zoneinfo/America/Denver'
+> 
+> ## C++ sampler for projection
+>     code <- '
++     arma::mat Hmat = Rcpp::as<arma::mat>(H);
++     arma::mat c0mat = Rcpp::as<arma::mat>(c0);
++     int steps = Rcpp::as<int>(timesteps);
++     int n = steps;
++     int k = Hmat.n_rows;
++     arma::mat call(k,n);
++     call.col(0)=Hmat*c0mat;
++     for(int i = 1; i < n; ++i){
++       call.col(i)=Hmat*call.col(i-1);
++     }
++     return Rcpp::wrap(call);
++   '
+>     calcc = cxxfunction(signature(H="numeric",c0="numeric",timesteps="numeric"),
++                         body=code, plugin="RcppArmadillo")
+> 
+> ## Neighborhood matrix calculator
+> neighborhood=function(raster, boundary){
++     nn=matrix(,length(raster[]),4)
++     for(i in 1:dim(nn)[1]){
++         if(extract(boundary,i)==1){
++             loc=adjacent(raster,i)[,2]
++             ln=loc[which((loc+1)==i)]
++             rn=loc[which((loc-1)==i)]
++             bn=loc[which((loc-dim(raster)[2])==i)]
++             tn=loc[which((loc+dim(raster)[2])==i)]
++             nn[i,1]=if(length(ln)>0 & extract(boundary,ln)>0){ln}else{0}
++             nn[i,2]=if(length(rn)>0 & extract(boundary,rn)>0){rn}else{0}
++             nn[i,3]=if(length(bn)>0 & extract(boundary,bn)>0){bn}else{0}
++             nn[i,4]=if(length(tn)>0 & extract(boundary,tn)>0){tn}else{0}
++         }else{nn[i,]=0}
++     }
++     nn
++ }
+> 
+> ## Propagator matrix for plain diffusion PDE
+> propagator.plainZF=function(NN,delta,gamma,dx,dy,dt){
++     H <- matrix(0,dim(NN)[1],dim(NN)[1])
++     for(i in 1:dim(H)[1]){
++         if(length(which(NN[i,]>0))>0){
++             ind.tmp=ifelse(NN[i,]>0,1,0)
++             H[i,i]=1-2*delta[i]*
++                 (dt/dx^2+dt/dy^2)+dt*gamma[i]+
++                 dt/dx^2*delta[i]*(1-ind.tmp[1])+
++                           dt/dx^2*delta[i]*(1-ind.tmp[2])+
++                                     dt/dy^2*delta[i]*(1-ind.tmp[3])+
++                                               dt/dy^2*delta[i]*
++                                                         (1-ind.tmp[4])
++             H[i,NN[i,1]]=dt/dx^2*delta[i]*ind.tmp[1]
++             H[i,NN[i,2]]=dt/dx^2*delta[i]*ind.tmp[2]
++             H[i,NN[i,3]]=dt/dy^2*delta[i]*ind.tmp[3]
++             H[i,NN[i,4]]=dt/dy^2*delta[i]*ind.tmp[4]
++         }else{H[i,i]=0}
++     }
++     H
++ }
+> 
+> ###
+> ### Load Glacier Bay Sea Otter Data
+> ###
+> 
+> setwd("~/Dropbox/Post-Doc/OriginalDataFiles")
+> OrigData.tmp=read.csv("GLBA_noDots.csv",header=TRUE)
+> OrigData=subset(OrigData.tmp,OrigData.tmp$group!=0)
+> 
+> ###
+> ### Get google map
+> ###
+> 
+> map=get_map(
++     location = c(-136.5,58.75),
++     source = "google",
++     zoom = 9,
++     maptype = "terrain",
++     color="bw"
++ )
+Source : https://maps.googleapis.com/maps/api/staticmap?center=58.75,-136.5&zoom=9&size=640x640&scale=2&maptype=terrain&language=en-EN
+> background.map=ggmap(map)
+> ## background.map
+> 
+> ###
+> ### Subset data
+> ###
+> 
+> year=OrigData$year[!is.na(OrigData$GROUP_X)]
+> counts=OrigData$adults[!is.na(OrigData$GROUP_X)]+
++     OrigData$pups[!is.na(OrigData$GROUP_X)]
+> x=OrigData$GROUP_X[!is.na(OrigData$GROUP_X)]
+> y=OrigData$GROUP_Y[!is.na(OrigData$GROUP_X)]
+> 
+> ###
+> ### Describe projection
+> ###
+> 
+> utmcoor<-SpatialPoints(cbind(x,y),
++                        proj4string=CRS(
++                            "+proj=utm +zone=8  +datum=NAD27 +units=m")
++                        )
+> lon.UTM=utmcoor$x
+> lat.UTM=utmcoor$y
+> loc.data.UTM=data.frame(lat.UTM,lon.UTM)
+> 
+> ###
+> ### Convert coordinates to Decimal Degrees (lat,long)
+> ###
+> 
+> longlatcoor<-spTransform(utmcoor,CRS("+proj=longlat +datum=NAD83"))
+> lon.DD=longlatcoor$x
+> lat.DD=longlatcoor$y
+> loc.data.DD=data.frame(lat.DD,lon.DD)
+> 
+> 
+> ###
+> ### Plot map and all locations
+> ###
+> 
+> location.map=background.map +
++     geom_point(data=loc.data.DD,
++                aes(y=lat.DD,
++                    x=lon.DD,
++                    color=log(counts)
++                    ),
++                size=0.1
++                ) +
++     scale_colour_gradientn(colours = terrain.colors(10)) +
++     theme(legend.position="none")
+> ## location.map
+> 
+> 
+> ###
+> ### 1999 locations
+> ###
+> 
+> p.1999=background.map +
++     geom_point(data=subset(loc.data.DD,year==1999),
++                aes(y=lat.DD,
++                    x=lon.DD,
++                    color=log(subset(counts,year==1999))
++                    ),
++                size=0.1
++                ) +
++     scale_colour_gradientn(colours = terrain.colors(10)) +
++     theme(legend.position="none")
+> ## p.1999
+> 
+> ###
+> ### 2000 locations
+> ###
+> 
+> p.2000=background.map +
++     geom_point(data=subset(loc.data.DD,year==2000),
++                aes(y=lat.DD,
++                    x=lon.DD,
++                    color=log(subset(counts,year==2000))
++                    ),
++                size=0.1
++                ) +
++     scale_colour_gradientn(colours = terrain.colors(10)) +
++     theme(legend.position="none")
+> ## p.2000
+> 
+> ###
+> ### 2001 locations
+> ###
+> 
+> p.2001=background.map +
++     geom_point(data=subset(loc.data.DD,year==2001),
++                aes(y=lat.DD,
++                    x=lon.DD,
++                    color=log(subset(counts,year==2001))
++                    ),
++                size=0.1
++                ) +
++   scale_colour_gradientn(colours = terrain.colors(10)) +
++     theme(legend.position="none")
+> ## p.2001
+> 
+> ###
+> ### 2002 locations
+> ###
+> 
+> p.2002=background.map +
++     geom_point(data=subset(loc.data.DD,year==2002),
++                aes(y=lat.DD,
++                    x=lon.DD,
++                    color=log(subset(counts,year==2002))
++                    ),
++                size=0.1
++                ) +
++   scale_colour_gradientn(colours = terrain.colors(10)) +
++     theme(legend.position="none")
+> ## p.2002
+> 
+> ###
+> ### 2003 locations
+> ###
+> 
+> p.2003=background.map +
++     geom_point(data=subset(loc.data.DD,year==2003),
++                aes(y=lat.DD,
++                    x=lon.DD,
++                    color=log(subset(counts,year==2003))
++                    ),
++                size=0.1
++                ) +
++   scale_colour_gradientn(colours = terrain.colors(10)) +
++     theme(legend.position="none")
+> ## p.2003
+> 
+> ###
+> ### 2004 locations
+> ###
+> 
+> p.2004=background.map +
++     geom_point(data=subset(loc.data.DD,year==2004),
++                aes(y=lat.DD,
++                    x=lon.DD,
++                    color=log(subset(counts,year==2004))
++                    ),
++                size=0.1
++                ) +
++   scale_colour_gradientn(colours = terrain.colors(10)) +
++     theme(legend.position="none")
+> ## p.2004
+> 
+> ###
+> ### 2006 locations
+> ###
+> 
+> p.2006=background.map +
++     geom_point(data=subset(loc.data.DD,year==2006),
++                aes(y=lat.DD,
++                    x=lon.DD,
++                    color=log(subset(counts,year==2006))
++                    ),
++                size=0.1
++                ) +
++   scale_colour_gradientn(colours = terrain.colors(10)) +
++     theme(legend.position="none")
+> ## p.2006
+> 
+> ###
+> ### 2012 locations
+> ###
+> 
+> p.2012=background.map +
++     geom_point(data=subset(loc.data.DD,year==2012),
++                aes(y=lat.DD,
++                    x=lon.DD,
++                    color=log(subset(counts,year==2012))
++                    ),
++                size=0.1
++                ) +
++   scale_colour_gradientn(colours = terrain.colors(10)) +
++     theme(legend.position="none")
+> ## p.2012
+> 
+> ###
+> ### Plot all years with google maps
+> ###
+> 
+> ## grid.arrange(p.1999,p.2000,p.2001,p.2002,p.2003,p.2004,
+> ##              p.2006,p.2012, ncol=2)
+> 
+> ###
+> ### Load ISU data
+> ###
+> 
+> all.ISU.data=read.csv(paste("~/Dropbox/Post-Doc/",
++                         "OriginalDataFiles/",
++                         "All ISUs 1999_2012_02032016.csv",
++                         sep=""))
+> ISU.N=all.ISU.data$circle.adt+
++     all.ISU.data$circle.pup
+> ISU.Y=all.ISU.data$strip.adt+
++     all.ISU.data$strip.pup
+> ISU.N[ISU.Y>ISU.N]=ISU.Y[ISU.Y>ISU.N]
+> sum(ISU.N<ISU.Y)
+[1] 0
+> ISU.year=all.ISU.data$year
+> ISU.data=data.frame(ISU.N,ISU.Y,ISU.year)
+> Y.1999=ISU.data$ISU.Y[ISU.data$ISU.year==1999]
+> N.1999=ISU.data$ISU.N[ISU.data$ISU.year==1999]
+> Y.2000=ISU.data$ISU.Y[ISU.data$ISU.year==2000]
+> N.2000=ISU.data$ISU.N[ISU.data$ISU.year==2000]
+> Y.2001=ISU.data$ISU.Y[ISU.data$ISU.year==2001]
+> N.2001=ISU.data$ISU.N[ISU.data$ISU.year==2001]
+> Y.2002=ISU.data$ISU.Y[ISU.data$ISU.year==2002]
+> N.2002=ISU.data$ISU.N[ISU.data$ISU.year==2002]
+> Y.2003=ISU.data$ISU.Y[ISU.data$ISU.year==2003]
+> N.2003=ISU.data$ISU.N[ISU.data$ISU.year==2003]
+> Y.2004=ISU.data$ISU.Y[ISU.data$ISU.year==2004]
+> N.2004=ISU.data$ISU.N[ISU.data$ISU.year==2004]
+> Y.2006=ISU.data$ISU.Y[ISU.data$ISU.year==2006]
+> N.2006=ISU.data$ISU.N[ISU.data$ISU.year==2006]
+> Y.2012=ISU.data$ISU.Y[ISU.data$ISU.year==2012]
+> N.2012=ISU.data$ISU.N[ISU.data$ISU.year==2012]
+> 
+> ISU=list(Y.1999=Y.1999,
++          N.1999=N.1999,
++          Y.2000=Y.2000,
++          N.2000=N.2000,
++          Y.2001=Y.2001,
++          N.2001=N.2001,
++          Y.2002=Y.2002,
++          N.2002=N.2002,
++          Y.2003=Y.2003,
++          N.2003=N.2003,
++          Y.2004=Y.2004,
++          N.2004=N.2004,
++          Y.2006=Y.2006,
++          N.2006=N.2006,
++          Y.2012=Y.2012,
++          N.2012=N.2012)
+> 
+> #############################################
+> ### Load Bathymetry Data
+> #############################################
+> 
+> load("~/Dropbox/Post-Doc/RFiles/lutris/data/bath.raster.RData")
+> 
+> ###
+> ### Study area extent
+> ###
+> 
+> xmin=404000
+> xmax=460000
+> ymin=6460000
+> ymax=6528000
+> 
+> ###
+> ### Bathymetry data
+> ###
+> 
+> bath.tmp=crop(bath.raster,extent(xmin,xmax,ymin,ymax))
+> Bath.r=aggregate(bath.tmp,c(16,16),na.rm=TRUE)
+> Bath.r[94,92]=NA  # add boulder island
+> 
+> ###
+> ### Plot Bath.r and sea otter locations
+> ###
+> 
+> ## plot(Bath.r)
+> ## points(loc.data.UTM$lon,loc.data.UTM$lat,cex=0.2,pch=16)
+> 
+> 
+> #################################################
+> #################################################
+> ###
+> ### Simulated Data for Analysis
+> ###
+> #################################################
+> #################################################
+> 
+> ###
+> ### Parameter values
+> ###
+> 
+> theta=500
+> kappa=5.95
+> beta0=17.72
+> beta1=-1.48
+> beta2=0.77
+> beta3=-0.35
+> beta4=1.0
+> beta=c(beta0,beta1,beta2,beta3,beta4)
+> gamma=0.20
+> p.1999=0.7953388
+> p.2000=0.75
+> p.2001=0.8583887
+> p.2002=0.8503951
+> p.2003=0.7606767
+> p.2004=0.7694584
+> p.2006=0.7470478
+> p.2012=0.5833859
+> odp=0.5
+> 
+> ###
+> ### Initial condition
+> ###
+> 
+> d=c(442000,6465000)
+> 
+> ###
+> ### Discretization values
+> ###
+> 
+> dt=1/200
+> time.steps=1/dt*length(1993:2012)
+> keep=seq(1,time.steps,time.steps/length(1993:2012))
+> 
+> ###
+> ### Homogenization value
+> ###
+> 
+> us.fact=10
+> 
+> ###
+> ### Aggregate values
+> ###
+> 
+> bath=crop(Bath.r,extent(xmin,xmax,ymin,ymax))
+> ## plot(bath)
+> ## points(loc.data.UTM$lon,loc.data.UTM$lat,cex=0.2,pch=16)
+> 
+> ###
+> ### Dimensions
+> ###
+> 
+> x=dim(bath)[2]
+> y=dim(bath)[1]
+> q=x*y
+> 
+> ###
+> ### Create `Cell' raster
+> ###
+> 
+> cell=raster(,nrows=y,ncols=x,xmn=xmin,xmx=xmax,
++                ymn=ymin,ymx=ymax,crs=NA)
+> cell[]=1:q
+> ## plot(cell)
+> 
+> ###
+> ### Create Bounday raster
+> ###
+> 
+> Boundary=bath
+> Boundary[is.na(Bath.r)]=0
+> Boundary[Bath.r<0]=1
+> Boundary[Bath.r>=0]=0
+> ## plot(Boundary)
+> ## points(loc.data.UTM$lon,loc.data.UTM$lat,cex=0.2,pch=16)
+> 
+> BoundaryNA=Boundary
+> BoundaryNA[Boundary==0]=NA
+> ## plot(BoundaryNA)
+> ## points(loc.data.UTM$lon,loc.data.UTM$lat,cex=0.2,pch=16)
+> 
+> BoundaryInf=BoundaryNA
+> BoundaryInf[120:170,0:80]=NA
+> BoundaryInf[150:170,0:140]=NA
+> BoundaryInf[134:170,116:140]=NA
+> BoundaryInf.v=rep(BoundaryInf[],length(keep))
+> ## plot(BoundaryInf)
+> 
+> ###
+> ### Up-scaled boundary layer surrounded by zeros
+> ###
+> 
+> Boundary.us=aggregate(Boundary,fact=us.fact,na.rm=TRUE,fun=max)
+> Boundary.us[Boundary.us[]>1]=1
+> Boundary.us[1,]=0
+> Boundary.us[,1]=0
+> Boundary.us[dim(Boundary.us)[1],]=0
+> Boundary.us[,dim(Boundary.us)[2]]=0
+>  ## plot(Boundary.us)
+> 
+> ###
+> ### Depth covariate
+> ###
+> 
+> depth=40
+> DepthCov=bath
+> DepthCov[bath[]< -depth]=0
+> DepthCov[bath[]>= -depth]=1
+> DepthCov[is.na(bath[])] = 0
+> DepthCov=DepthCov*Boundary
+> ## plot(DepthCov)
+> ## points(loc.data.UTM$lon,loc.data.UTM$lat,cex=0.2,pch=16)
+> 
+> ###
+> ### Distance to shore covariate
+> ###
+> 
+> DistCov.tmp1=Boundary
+> DistCov.tmp1[Boundary==1]=NA
+> DistCov.tmp2=distance(DistCov.tmp1)
+> DistCov.tmp2[is.na(DistCov.tmp2)]=0
+> DistCov=scale(DistCov.tmp2,center=TRUE,scale=TRUE)
+> DistCov=DistCov*Boundary
+> ## plot(DistCov)
+> ## points(loc.data.UTM$lon,loc.data.UTM$lat,cex=0.2,pch=16)
+> 
+> ###
+> ### Bottom slope
+> ###
+> 
+> SlopeCov.tmp=terrain(bath,opt='slope',unit='degrees',neighbors=8)
+> SlopeCov.tmp[is.na(SlopeCov.tmp)]=0
+> SlopeCov=scale(SlopeCov.tmp, center=TRUE, scale=TRUE)
+> SlopeCov=SlopeCov*Boundary*DepthCov
+> ## plot(SlopeCov)
+> ## points(loc.data.UTM$lon,loc.data.UTM$lat,cex=0.2,pch=16)
+> 
+> ###
+> ### Shoreline complexity
+> ###
+> 
+> ShoreCov.tmp=boundaries(DistCov.tmp1,type='inner')
+> ShoreCov.tmp[is.na(ShoreCov.tmp)]=0
+> ShoreCov=focal(ShoreCov.tmp,w=matrix(1,nr=11,nc=11))*Boundary
+> ShoreCov[is.na(ShoreCov)]=0
+> ShoreCov=scale(ShoreCov, center=TRUE, scale=TRUE)
+> ShoreCov=ShoreCov*Boundary
+> ## plot(ShoreCov)
+> ## points(loc.data.UTM$lon,loc.data.UTM$lat,cex=0.2,pch=16)
+> 
+> ###
+> ### Create co-variate matrices
+> ###
+> 
+> X=cbind(1,DepthCov[],DistCov[],SlopeCov[]*DepthCov[],ShoreCov[])
+> W=matrix(1,nr=q,nc=1)
+> 
+> ###
+> ### Diffusion rate for pde
+> ###
+> 
+> delta=cell
+> delta[]=exp(X%*%beta)
+> ## plot(delta*BoundaryNA)
+> 
+> ###
+> ### Growth rate for pde
+> ###
+> 
+> gamma[]=W%*%gamma
+Warning message:
+In gamma[] = W %*% gamma :
+  number of items to replace is not a multiple of replacement length
+> 
+> ###
+> ### Diffusion rate for homogenized pde
+> ###
+> 
+> delta.bar=aggregate(delta,fact=us.fact,na.rm=TRUE,fun=function(x,na.rm){1/mean(1/x)})
+> ## plot(delta.bar)
+> 
+> ###
+> ### Growth rate for homogenized pde
+> ###
+> 
+> gamma.bar=delta.bar*aggregate(gamma/delta,fact=us.fact,fun=mean,na.rm=TRUE)
+> ## plot(gamma.bar)
+> 
+> ###
+> ### First-order neighborhood matrix
+> ###
+> 
+> NN=neighborhood(delta.bar,Boundary.us)
+> 
+> ###
+> ### Propagator matrix
+> ###
+> 
+> H=propagator.plainZF(NN=NN,delta=delta.bar[],gamma=gamma.bar[],
++                      dx=res(delta.bar)[1],dy=res(delta.bar)[2],dt=dt)
+> 
+> ###
+> ### Initial condition (D is in km)
+> ###
+> 
+> c0=raster(,nrows=y/us.fact,ncols=x/us.fact,
++             xmn=xmin,xmx=xmax,ymn=ymin,ymx=ymax,crs=NA)
+> lambda0=cell
+> D=rdist(data.frame(SpatialPoints(lambda0)),matrix(d,1,2))/1000
+> lambda0[]=(exp(-D^2/kappa^2)/sum(exp(-D^2/kappa^2))*theta)
+> c0[]=extract(delta*lambda0,SpatialPoints(delta.bar))
+> c0.star=c0
+> ## plot(lambda0*BoundaryInf)
+> ## plot(c0*Boundary.us)
+> 
+> ###
+> ### Stack raster layers
+> ###
+> 
+> c.all=brick(nrows=dim(c0)[1], ncols=dim(c0)[2], xmn=xmin, xmx=xmax,
++                 ymn=ymin, ymx=ymax)
+> c.all=setValues(c.all, calcc(H, vec(c0[]),time.steps)[,keep])
+> lambda.all=disaggregate(c.all,us.fact)/delta
+> ## plot(c.all)
+> ## plot(lambda.all*BoundaryNA)
+> ## plot(lambda.all[[20]]*BoundaryInf)
+> ## points(loc.data.UTM$lon,loc.data.UTM$lat,cex=0.2,pch=16)
+> 
+> ###
+> ### Expected abundance
+> ###
+> 
+> EA.v=numeric(20)
+> for(i in 1:20){
++     EA.v[i]=sum(BoundaryInf[]*lambda.all[[i]][],na.rm=TRUE)
++ }
+> EA.v
+ [1]  172.0227  192.1542  243.7943  307.2972  382.1485  471.1744  578.0095
+ [8]  707.0431  863.5977 1054.1524 1286.6111 1570.6295 1918.0123 2343.1997
+[15] 2863.8601 3501.6155 4282.9277 5240.1814 6413.0091 7849.9096
+> 
+> ###
+> ### Generate abundance from expected abundance (lambda)
+> ###
+> 
+> N=lambda0
+> N[]=rnbinom(n=length(lambda.all[[1]][]),size=odp,,mu=lambda.all[[1]][])
+> N=stack(mget(rep("N",length(keep))))
+> for(i in 2:length(keep)){
++     N[[i]][]=rnbinom(n=length(lambda.all[[i]][]),size=odp,,mu=lambda.all[[i]][])
++ }
+> 
+> ###
+> ### Generate data from abundance
+> ###
+> 
+> p=0.74
+> p.vs=c(p,
++        p,
++        p,
++        p,
++        p,
++        p,
++        p.1999,
++        p.2000,
++        p.2001,
++        p.2002,
++        p.2003,
++        p.2004,
++        p,
++        p.2006,
++        p,
++        p,
++        p,
++        p,
++        p,
++        p.2012)
+> Y=N[[1]]
+> Y[]=rbinom(q, N[[1]][],p.vs[1])
+> Y=stack(mget(rep("Y", length(keep))))
+> for (i in 2:length(keep)) {
++     Y[[i]][] = rbinom(q, N[[i]][],p.vs[i])
++ }
+> 
+> ###
+> ### Create spatial lines object
+> ###
+> 
+> ## 1999
+> TP.surv.1999=subset(OrigData.tmp,OrigData.tmp$year==1999)
+> l.1999=list()
+> Sl.1999=list()
+> S.1999=list()
+> 
+> for(i in 1:dim(TP.surv.1999)[1]){
++     l.1999[[i]]=cbind(c(TP.surv.1999$west_long[i],
++                         TP.surv.1999$east_long[i]),
++                       c(TP.surv.1999$west_lat[i],
++                         TP.surv.1999$east_lat[i]))
++     Sl.1999[[i]]=Line(l.1999[[i]])
++     S.1999[[i]]=Lines(list(Sl.1999[[i]]), ID=i)
++ }
+> Sb.1999=SpatialLines(S.1999)
+> ## plot(Sb.1999)
+> 
+> ## 2000
+> TP.surv.2000=subset(OrigData.tmp,OrigData.tmp$year==2000)
+> l.2000=list()
+> Sl.2000=list()
+> S.2000=list()
+> 
+> for(i in 1:dim(TP.surv.2000)[1]){
++     l.2000[[i]]=cbind(c(TP.surv.2000$west_long[i],
++                         TP.surv.2000$east_long[i]),
++                       c(TP.surv.2000$west_lat[i],
++                         TP.surv.2000$east_lat[i]))
++     Sl.2000[[i]]=Line(l.2000[[i]])
++     S.2000[[i]]=Lines(list(Sl.2000[[i]]), ID=i)
++ }
+> Sb.2000=SpatialLines(S.2000)
+> ## plot(Sb.2000)
+> 
+> ## 2001
+> TP.surv.2001=subset(OrigData.tmp,OrigData.tmp$year==2001)
+> l.2001=list()
+> Sl.2001=list()
+> S.2001=list()
+> 
+> for(i in 1:dim(TP.surv.2001)[1]){
++     l.2001[[i]]=cbind(c(TP.surv.2001$west_long[i],
++                         TP.surv.2001$east_long[i]),
++                       c(TP.surv.2001$west_lat[i],
++                         TP.surv.2001$east_lat[i]))
++     Sl.2001[[i]]=Line(l.2001[[i]])
++     S.2001[[i]]=Lines(list(Sl.2001[[i]]), ID=i)
++ }
+> Sb.2001=SpatialLines(S.2001)
+> ## plot(Sb.2001)
+> 
+> ## 2002
+> TP.surv.2002=subset(OrigData.tmp,OrigData.tmp$year==2002)
+> l.2002=list()
+> Sl.2002=list()
+> S.2002=list()
+> 
+> for(i in 1:dim(TP.surv.2002)[1]){
++     l.2002[[i]]=cbind(c(TP.surv.2002$west_long[i],
++                         TP.surv.2002$east_long[i]),
++                       c(TP.surv.2002$west_lat[i],
++                         TP.surv.2002$east_lat[i]))
++     Sl.2002[[i]]=Line(l.2002[[i]])
++     S.2002[[i]]=Lines(list(Sl.2002[[i]]), ID=i)
++ }
+> Sb.2002=SpatialLines(S.2002)
+> ## plot(Sb.2002)
+> 
+> ## 2003
+> TP.surv.2003=subset(OrigData.tmp,OrigData.tmp$year==2003)
+> l.2003=list()
+> Sl.2003=list()
+> S.2003=list()
+> 
+> for(i in 1:dim(TP.surv.2003)[1]){
++     l.2003[[i]]=cbind(c(TP.surv.2003$west_long[i],
++                         TP.surv.2003$east_long[i]),
++                       c(TP.surv.2003$west_lat[i],
++                         TP.surv.2003$east_lat[i]))
++     Sl.2003[[i]]=Line(l.2003[[i]])
++     S.2003[[i]]=Lines(list(Sl.2003[[i]]), ID=i)
++ }
+> Sb.2003=SpatialLines(S.2003)
+> ## plot(Sb.2003)
+> 
+> ## 2004
+> TP.surv.2004=subset(OrigData.tmp,OrigData.tmp$year==2004)
+> l.2004=list()
+> Sl.2004=list()
+> S.2004=list()
+> 
+> for(i in 1:dim(TP.surv.2004)[1]){
++     l.2004[[i]]=cbind(c(TP.surv.2004$west_long[i],
++                         TP.surv.2004$east_long[i]),
++                       c(TP.surv.2004$west_lat[i],
++                         TP.surv.2004$east_lat[i]))
++     Sl.2004[[i]]=Line(l.2004[[i]])
++     S.2004[[i]]=Lines(list(Sl.2004[[i]]), ID=i)
++ }
+> Sb.2004=SpatialLines(S.2004)
+> ## plot(Sb.2004)
+> 
+> ## 2006
+> TP.surv.2006=subset(OrigData.tmp,OrigData.tmp$year==2006)
+> l.2006=list()
+> Sl.2006=list()
+> S.2006=list()
+> 
+> for(i in 1:dim(TP.surv.2006)[1]){
++     l.2006[[i]]=cbind(c(TP.surv.2006$west_long[i],
++                         TP.surv.2006$east_long[i]),
++                       c(TP.surv.2006$west_lat[i],
++                         TP.surv.2006$east_lat[i]))
++     Sl.2006[[i]]=Line(l.2006[[i]])
++     S.2006[[i]]=Lines(list(Sl.2006[[i]]), ID=i)
++ }
+> Sb.2006=SpatialLines(S.2006)
+> ## plot(Sb.2006)
+> 
+> ## 2012
+> TP.surv.2012=subset(OrigData.tmp,OrigData.tmp$year==2012)
+> l.2012=list()
+> Sl.2012=list()
+> S.2012=list()
+> 
+> for(i in 1:dim(TP.surv.2012)[1]){
++     l.2012[[i]]=cbind(c(TP.surv.2012$west_long[i],
++                         TP.surv.2012$east_long[i]),
++                       c(TP.surv.2012$west_lat[i],
++                         TP.surv.2012$east_lat[i]))
++     Sl.2012[[i]]=Line(l.2012[[i]])
++     S.2012[[i]]=Lines(list(Sl.2012[[i]]), ID=i)
++ }
+> Sb.2012=SpatialLines(S.2012)
+> ## plot(Sb.2012)
+> 
+> ## plot(Boundary)
+> ## plot(Sb.2012,add=TRUE)
+> loc.data.UTM.2012=subset(loc.data.UTM,year==2012)
+> ## points(loc.data.UTM.2012$lon,loc.data.UTM.2012$lat,cex=0.2,pch=16)
+> 
+> ###
+> ### Convert the spatial lines object Sb into a raster
+> ###
+> 
+> transects.r=raster(,nrows=y,ncols=x,xmn=xmin,
++                    xmx=xmax,ymn=ymin,ymx=ymax)
+> 
+> ## Transects.r.1993=rasterize(Sb.1993,transects.r)
+> Transects.r.1999=rasterize(Sb.1999,transects.r)
+> Transects.r.2000=rasterize(Sb.2000,transects.r)
+> Transects.r.2001=rasterize(Sb.2001,transects.r)
+> Transects.r.2002=rasterize(Sb.2002,transects.r)
+> Transects.r.2003=rasterize(Sb.2003,transects.r)
+> Transects.r.2004=rasterize(Sb.2004,transects.r)
+> Transects.r.2006=rasterize(Sb.2006,transects.r)
+> Transects.r.2012=rasterize(Sb.2012,transects.r)
+> 
+> ## Transects.r.1993[!is.na(Transects.r.1993[])]=1
+> Transects.r.1999[!is.na(Transects.r.1999[])]=1
+> Transects.r.2000[!is.na(Transects.r.2000[])]=1
+> Transects.r.2001[!is.na(Transects.r.2001[])]=1
+> Transects.r.2002[!is.na(Transects.r.2002[])]=1
+> Transects.r.2003[!is.na(Transects.r.2003[])]=1
+> Transects.r.2004[!is.na(Transects.r.2004[])]=1
+> Transects.r.2006[!is.na(Transects.r.2006[])]=1
+> Transects.r.2012[!is.na(Transects.r.2012[])]=1
+> 
+> ###
+> ### Capture simulated Y at transects
+> ###
+> 
+> ## Data.1993.r=Transects.r.1993
+> Data.1999.r=Transects.r.1999
+> Data.2000.r=Transects.r.2000
+> Data.2001.r=Transects.r.2001
+> Data.2002.r=Transects.r.2002
+> Data.2003.r=Transects.r.2003
+> Data.2004.r=Transects.r.2004
+> Data.2006.r=Transects.r.2006
+> Data.2012.r=Transects.r.2012
+> 
+> ## Data.1993.r[]=Transects.r.1993[]*Y[[1]][]
+> Data.1999.r[]=Transects.r.1999[]*Y[[7]][]
+> Data.2000.r[]=Transects.r.2000[]*Y[[8]][]
+> Data.2001.r[]=Transects.r.2001[]*Y[[9]][]
+> Data.2002.r[]=Transects.r.2002[]*Y[[10]][]
+> Data.2003.r[]=Transects.r.2003[]*Y[[11]][]
+> Data.2004.r[]=Transects.r.2004[]*Y[[12]][]
+> Data.2006.r[]=Transects.r.2006[]*Y[[14]][]
+> Data.2012.r[]=Transects.r.2012[]*Y[[20]][]
+> ## plot(Data.1999.r)
+> ## plot(Data.2012.r)
+> 
+> ###
+> ### Data for analysis
+> ###
+> 
+> Y=c(## Data.1993.r[],
++     rep(NA,length(Data.1999.r[])*(1999-1993)),
++     Data.1999.r[],
++     Data.2000.r[],
++     Data.2001.r[],
++     Data.2002.r[],
++     Data.2003.r[],
++     Data.2004.r[],
++     rep(NA,length(Data.1999.r[])),
++     Data.2006.r[],
++     rep(NA,length(Data.1999.r[])*(2012-2007)),
++     Data.2012.r[])
+> 
+> ############################################################################
+> ############################################################################
+> ###
+> ### Fit the model to the simulated data using MCMC
+> ###
+> ############################################################################
+> ############################################################################
+> 
+> ###
+> ### Bundle data
+> ###
+> 
+> data=list(Y=Y,
++           ISU=ISU,
++           X=X)
+> 
+> ###
+> ### Spatio-temporal settings
+> ###
+> 
+> dt=1/200
+> time.frame=1993:2012
+> us.fact=10
+> res=400
+> d=c(442000,6465000)
+> xmin=404000
+> xmax=460000
+> ymin=6460000
+> ymax=6528000
+> extent=c(xmin,xmax,ymin,ymax)
+> st.info=list(dt=dt,
++              time.frame=time.frame,
++              us.fact=us.fact,
++              res=res,
++              d=d,
++              extent=extent
++              )
+> 
+> ###
+> ### MCMC Settings
+> ###
+> 
+> n.iter=50000
+> checkpoint=10
+> 
+> ###
+> ### Priors
+> ###
+> 
+> ## beta
+> mu.beta=0
+> var.beta=10^2
+> 
+> ## gamma
+> q.gamma=-0.5
+> r.gamma=0.5
+> 
+> ## theta
+> mu.theta=500
+> var.theta=500
+> 
+> ## kappa
+> mu.kappa=5.95
+> var.kappa=5
+> 
+> ## p
+> q.p=1
+> r.p=1
+> 
+> ## tau
+> q.tau=0
+> r.tau=1
+> 
+> priors=list(
++     beta.prior=c(mu.beta,var.beta),
++     gamma.prior=c(q.gamma,r.gamma),
++     theta.prior=c(mu.theta,var.theta),
++     kappa.prior=c(mu.kappa,var.kappa),
++     p.prior=c(q.p,r.p),
++     tau.prior=c(q.tau,r.tau)
++ )
+> 
+> ###
+> ### Starting values
+> ###
+> 
+> gamma=0.20
+> beta=c(17.72,-1.48,0.77,-0.35,1.0)
+> theta=500
+> kappa=5.95
+> p.1999=0.80
+> p.2000=0.75
+> p.2001=0.86
+> p.2002=0.85
+> p.2003=0.76
+> p.2004=0.77
+> p.2006=0.75
+> p.2012=0.58
+> p=c(rep(NA,6*q),
++     rep(p.1999,q),
++     rep(p.2000,q),
++     rep(p.2001,q),
++     rep(p.2002,q),
++     rep(p.2003,q),
++     rep(p.2004,q),
++     rep(NA,q),
++     rep(p.2006,q),
++     rep(NA,q*5),
++     rep(p.2012,q))
+> odp=0.5
+> 
+> inits=list(gamma=gamma,
++            beta=beta,
++            theta=theta,
++            kappa=kappa,
++            odp=odp,
++            p=p
++            )
+> 
+> ###
+> ### Parameters to monitor
+> ###
+> 
+> parameters=c("gamma",
++              "beta",
++              "kappa",
++              "theta",
++              "odp",
++              "p",
++              "n.tot")
+> 
+> ###
+> ### Output location
+> ###
+> 
+> output.location="~/GB_Output.RData"
+> 
+> Bathymetry=bath
+> rm(list=ls()[!ls() %in% c("data",
++                           "priors",
++                           "inits",
++                           "parameters",
++                           "st.info",
++                           "Bathymetry",
++                           "n.iter",
++                           "checkpoint",
++                           "output.location")])
+> 
+> ###
+> ### Run MCMC
+> ###
+> 
+> source(paste("~/Dropbox/GitHub/GlacierBay-SeaOtter-Analysis/",
++              "GlacierBay-SeaOtter-Analysis/MCMC.R",sep=""))
+> MCMC(data,
++      priors,
++      inits,
++      parameters,
++      st.info,
++      Bathymetry,
++      n.iter=n.iter,
++      checkpoint=checkpoint,
++      output.location)
+10 20 30 40 50 60 70 80 90 100 110 120 130 140 150 160 170 180 190 200 210 220 230 240 250 260 270 280 290 300 310 320 330 340 350 360 370 380 390 400 410 420 430 440 450 460 470 480 490 500 510 520 530 540 550 560 570 580 590 600 610 620 630 640 650 660 670 680 690 700 710 720 730 740 750 760 770 780 790 800 810 820 830 840 850 860 870 880 

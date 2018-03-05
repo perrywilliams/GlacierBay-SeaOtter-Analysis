@@ -30,7 +30,6 @@ required.packages=c("coda",
                     "RcppArmadillo",
                     "rgdal",
                     "rgeos")
-## install.packages(required.packages)
 lapply(required.packages,library,character.only=TRUE)
 
 ## C++ sampler for projection
@@ -91,9 +90,9 @@ propagator.plainZF=function(NN,delta,gamma,dx,dy,dt){
     H
 }
 
-#############################################
+############################################################################
 ### Load Bathymetry Data
-#############################################
+############################################################################
 
 ## This file is available on GitHub
 load("~/Dropbox/Post-Doc/RFiles/lutris/data/bath.raster.RData")
@@ -158,12 +157,20 @@ dataDistr=dataDistr[-ind.pred,]
 ind=1993:2012
 
 ###
+### Load 2017 data
+###
+
+
+
+###
 ### Convert Data to Raster
 ###
 
 cell=raster(,nrows=y,ncols=x,xmn=xmin,xmx=xmax,
             ymn=ymin,ymx=ymax,crs=NA)
-CISU=N.r=ISUind.r=Y.r=Counts=Boundary=BoundaryDist=DistCov=DepthCov=gamma=delta=lambda0=SurvR=SimulatedDataR=cell
+CISU=N.r=ISUind.r=Y.r=Counts=Boundary=
+    BoundaryDist=DistCov=DepthCov=
+        gamma=delta=lambda0=SurvR=SimulatedDataR=cell
 c0=raster(,nrows=y/us.fact,ncols=x/us.fact,
           xmn=xmin,xmx=xmax,ymn=ymin,ymx=ymax,
           crs=NA)
@@ -749,7 +756,7 @@ for (i in 1:20) {
   Y.r[[i]][]=ifelse(Counts[[i]][]>0,Counts[[i]][],
     transectAll[[i]][]-1)
 }
-## plot(Y.r[[7]])
+## plot(Y.r[[20]])
 
 ######################################################
 ### Load ISU data
