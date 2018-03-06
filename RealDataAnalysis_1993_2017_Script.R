@@ -208,58 +208,129 @@ for(t in years){
 }
 
 ############################################################################
-### Add new aerial photograph data
+### Add new (2017) aerial photograph data
 ############################################################################
 
+rand.2017=read.csv("~/Dropbox/Post-Doc/OriginalDataFiles/SO_D_2017/SO_D_20170719_R.csv")
+rand.2017=rand.2017[!is.na(rand.2017$LATITUDE_WGS84),]
+opt.2017=read.csv("~/Dropbox/Post-Doc/OriginalDataFiles/SO_D_2017/SO_D_20170721_O.csv")
+opt.2017=opt.2017[!is.na(opt.2017$LATITUDE_WGS84),]
+abund.2017=read.csv("~/Dropbox/Post-Doc/OriginalDataFiles/SO_D_2017/SO_D_20170728_A.csv")
+abund.2017=abund.2017[!is.na(abund.2017$LATITUDE_WGS84),]
+
+all.2017=rbind(rand.2017,opt.2017,abund.2017)
+xyc=cbind(all.2017$LONGITUDE_WGS84,
+          all.2017$LATITUDE_WGS84)
+
 ###
-### Locations of observations
+### Assign projection
 ###
 
-obs.r=read.csv(paste("~/Dropbox/Post-Doc/",
-                     "OriginalDataFiles/SO_I_2017/SO_I_20170719_R.csv",
-                      sep=""))
-
-obs.o=read.csv(paste("~/Dropbox/Post-Doc/",
-                     "OriginalDataFiles/SO_I_2017/SO_I_20170721_O.csv",
-                      sep=""))
-
-obs.a=read.csv(paste("~/Dropbox/Post-Doc/",
-                     "OriginalDataFiles/SO_I_2017/SO_I_20170728_A.csv",
-                      sep=""))
-
-x_loc=c(obs.r$LONGITUDE_WGS84,
-        obs.o$LONGITUDE_WGS84,
-        obs.a$LONGITUDE_WGS84)
-y_loc=c(obs.r$LATITUDE_WGS84,
-        obs.o$LATITUDE_WGS84,
-        obs.a$LATITUDE_WGS84)
-Counts.tmp=c(obs.r$COUNT_ADULT+obs.r$COUNT_PUP,
-             obs.o$COUNT_ADULT+obs.o$COUNT_PUP,
-             obs.a$COUNT_ADULT+obs.a$COUNT_PUP
-             )
-
-xyc=cbind(x_loc,y_loc)
-xyc=xyc[!is.na(x_loc),]
 DDcoor=SpatialPoints(xyc,CRS(
                            "+proj=longlat  +datum=WGS84")
                        )
+
+###
+### Change projection
+###
 
 utmcoor=spTransform(DDcoor,
                        CRS(
                            "+proj=utm +zone=8  +datum=NAD27 +units=m")
                        )
+head(utmcoor@coords)
 
-Counts.sub=rasterize(x=utmcoor@coords,
-                     y=data.r,
-                     field=Counts.tmp,fun="max",na.rm=TRUE,
-                     background=0)
+###
+### Counts of sea otters
+###
 
-plot(Counts.sub)
-Counts[[21]][]=rep(NA,q)
-Counts[[22]][]=rep(NA,q)
-Counts[[23]][]=rep(NA,q)
-Counts[[24]][]=rep(NA,q)
-Counts[[25]][]=Counts.sub[]
+count.2017=all.2017$COUNT_ADULT+all.2017$COUNT_PUP
+
+###
+### Identify cell id
+###
+
+cell[]=1:q
+cell.ID=extract(cell,utmcoor@coords)
+
+###
+### build matrix with coords, cell id, and count values
+###
+
+mat=cbind(utmcoor@coords,cell.ID,count.2017)
+head(mat)
+mat=mat[order(mat[,3]),]
+
+###
+### Create Y matrix
+###
+
+uniq.ID=unique(mat[,3])
+max.photos=rep(NA,length(uniq.ID))
+for(i in uniq.ID){
+    data.tmp=subset(mat,cell.ID==i)
+    max.photos[i]=dim(data.tmp)[1]
+}
+max.dim.Y2=max(max.photos,na.rm=TRUE)
+
+Y.tmp=matrix(,length(uniq.ID),max.dim.Y2)
+for(i in 1:length(uniq.ID)){
+    data.tmp=subset(mat,mat[,3]==uniq.ID[i])
+    Y.tmp[i,]=c(data.tmp[,4],rep(NA,dim(Y.tmp)[2]-length(data.tmp[,4])))
+}
+Y=cbind(uniq.ID,Y.tmp)
+Y.2017=matrix(NA,q,max.dim.Y2)
+Y.2017[uniq.ID,]=Y.tmp
+
+###
+### Locations of observations
+###
+
+## obs.r=read.csv(paste("~/Dropbox/Post-Doc/",
+##                      "OriginalDataFiles/SO_I_2017/SO_I_20170719_R.csv",
+##                       sep=""))
+
+## obs.o=read.csv(paste("~/Dropbox/Post-Doc/",
+##                      "OriginalDataFiles/SO_I_2017/SO_I_20170721_O.csv",
+##                       sep=""))
+
+## obs.a=read.csv(paste("~/Dropbox/Post-Doc/",
+##                      "OriginalDataFiles/SO_I_2017/SO_I_20170728_A.csv",
+##                       sep=""))
+
+## x_loc=c(obs.r$LONGITUDE_WGS84,
+##         obs.o$LONGITUDE_WGS84,
+##         obs.a$LONGITUDE_WGS84)
+## y_loc=c(obs.r$LATITUDE_WGS84,
+##         obs.o$LATITUDE_WGS84,
+##         obs.a$LATITUDE_WGS84)
+## Counts.tmp=c(obs.r$COUNT_ADULT+obs.r$COUNT_PUP,
+##              obs.o$COUNT_ADULT+obs.o$COUNT_PUP,
+##              obs.a$COUNT_ADULT+obs.a$COUNT_PUP
+##              )
+
+## xyc=cbind(x_loc,y_loc)
+## xyc=xyc[!is.na(x_loc),]
+## DDcoor=SpatialPoints(xyc,CRS(
+##                            "+proj=longlat  +datum=WGS84")
+##                        )
+
+## utmcoor=spTransform(DDcoor,
+##                        CRS(
+##                            "+proj=utm +zone=8  +datum=NAD27 +units=m")
+##                        )
+
+## Counts.sub=rasterize(x=utmcoor@coords,
+##                      y=data.r,
+##                      field=Counts.tmp,fun="max",na.rm=TRUE,
+##                      background=0)
+
+## plot(Counts.sub)
+## Counts[[21]][]=rep(NA,q)
+## Counts[[22]][]=rep(NA,q)
+## Counts[[23]][]=rep(NA,q)
+## Counts[[24]][]=rep(NA,q)
+## Counts[[25]][]=Counts.sub[]
 
 
 
@@ -763,80 +834,80 @@ for(i in unique(ID)[1:324]){  ## 347
 }
 ## plot(Sb.12)
 
-###
-### 2017
-###
+## ###
+## ### 2017
+## ###
 
-d.17.tmp=read.csv(paste("~/Dropbox/Post-Doc/",
-                        "SurveyRoute_2017/2017AllTransects.csv",
-                        sep=""))
-
-
-DDcoor=SpatialPoints(d.17.tmp[,7:6],CRS(
-                           "+proj=longlat  +datum=WGS84")
-                       )
-
-utmcoor=spTransform(DDcoor,
-                       CRS(
-                           "+proj=utm +zone=8  +datum=NAD27 +units=m")
-                       )
-
-d.17.tmp[,7:6]=utmcoor@coords
-
-###
-### Unique transects flown in 2017
-###
-
-ID=cumsum(!duplicated(d.17.tmp[,1:2]))
-d.17=cbind(d.17.tmp,ID)
+## d.17.tmp=read.csv(paste("~/Dropbox/Post-Doc/",
+##                         "SurveyRoute_2017/2017AllTransects.csv",
+##                         sep=""))
 
 
-###
-### Subset observation data for each transect
-###
+## DDcoor=SpatialPoints(d.17.tmp[,7:6],CRS(
+##                            "+proj=longlat  +datum=WGS84")
+##                        )
 
-l.17=list()
-Sl.17=list()
-S.17=list()
+## utmcoor=spTransform(DDcoor,
+##                        CRS(
+##                            "+proj=utm +zone=8  +datum=NAD27 +units=m")
+##                        )
 
-for(i in unique(ID)){  ## 347
-    t.sub=subset(d.17,ID==i)
+## d.17.tmp[,7:6]=utmcoor@coords
 
-    ##
-    ## Store start, end, group location coordinates
-    ##
+## ###
+## ### Unique transects flown in 2017
+## ###
 
-    coords.tmp1=matrix(,dim(t.sub)[1]*3,2)
-    colnames(coords.tmp1)=c("x","y")
+## ID=cumsum(!duplicated(d.17.tmp[,1:2]))
+## d.17=cbind(d.17.tmp,ID)
 
-    ## West end point
-    coords.tmp1[1:dim(t.sub)[1],1]=t.sub[t.sub$Side=="W",]$Longitude
-    coords.tmp1[1:dim(t.sub)[1],2]=t.sub[t.sub$Side=="W",]$Latitude
 
-    ## ## Group locations
-    ## coords.tmp1[(dim(t.sub)[1]+1):(2*dim(t.sub)[1]),1]=t.sub$GROUP_X
-    ## coords.tmp1[(dim(t.sub)[1]+1):(2*dim(t.sub)[1]),2]=t.sub$GROUP_Y
+## ###
+## ### Subset observation data for each transect
+## ###
 
-    ## East end point
-    coords.tmp1[(2*dim(t.sub)[1]+1):(3*dim(t.sub)[1]),1]=t.sub[t.sub$Side=="E",]$Longitude
-    coords.tmp1[(2*dim(t.sub)[1]+1):(3*dim(t.sub)[1]),2]=t.sub[t.sub$Side=="E",]$Latitude
+## l.17=list()
+## Sl.17=list()
+## S.17=list()
 
-    ## Remove duplicates
-    coords.tmp2=unique(coords.tmp1)
+## for(i in unique(ID)){  ## 347
+##     t.sub=subset(d.17,ID==i)
 
-    ## Remove NA rows
-    coords.tmp3=coords.tmp2[!is.na(coords.tmp2[,1]),]
+##     ##
+##     ## Store start, end, group location coordinates
+##     ##
 
-    ## Order from left to right
-    coords=coords.tmp3[order(coords.tmp3[,1]),]
+##     coords.tmp1=matrix(,dim(t.sub)[1]*3,2)
+##     colnames(coords.tmp1)=c("x","y")
 
-    l.17[[i]]=coords
-    Sl.17[[i]]=Line(l.17[[i]])
-    S.17[[i]]=Lines(list(Sl.17[[i]]), ID=i)
-    Sb.17=SpatialLines(S.17)
+##     ## West end point
+##     coords.tmp1[1:dim(t.sub)[1],1]=t.sub[t.sub$Side=="W",]$Longitude
+##     coords.tmp1[1:dim(t.sub)[1],2]=t.sub[t.sub$Side=="W",]$Latitude
 
-}
-plot(Sb.17)
+##     ## ## Group locations
+##     ## coords.tmp1[(dim(t.sub)[1]+1):(2*dim(t.sub)[1]),1]=t.sub$GROUP_X
+##     ## coords.tmp1[(dim(t.sub)[1]+1):(2*dim(t.sub)[1]),2]=t.sub$GROUP_Y
+
+##     ## East end point
+##     coords.tmp1[(2*dim(t.sub)[1]+1):(3*dim(t.sub)[1]),1]=t.sub[t.sub$Side=="E",]$Longitude
+##     coords.tmp1[(2*dim(t.sub)[1]+1):(3*dim(t.sub)[1]),2]=t.sub[t.sub$Side=="E",]$Latitude
+
+##     ## Remove duplicates
+##     coords.tmp2=unique(coords.tmp1)
+
+##     ## Remove NA rows
+##     coords.tmp3=coords.tmp2[!is.na(coords.tmp2[,1]),]
+
+##     ## Order from left to right
+##     coords=coords.tmp3[order(coords.tmp3[,1]),]
+
+##     l.17[[i]]=coords
+##     Sl.17[[i]]=Line(l.17[[i]])
+##     S.17[[i]]=Lines(list(Sl.17[[i]]), ID=i)
+##     Sb.17=SpatialLines(S.17)
+
+## }
+## plot(Sb.17)
 
 ##################################################
 ### Rasterize transects
@@ -874,22 +945,22 @@ transectAll[[18]][]=rep(NA,q)
 transectAll[[19]][]=rep(NA,q)
 transectAll[[20]]=rasterize(x=Sb.12,y=transectAll[[20]],
                          field=1,fun="last",background=NA)
-transectAll[[21]][]=rep(NA,q)
-transectAll[[22]][]=rep(NA,q)
-transectAll[[23]][]=rep(NA,q)
-transectAll[[24]][]=rep(NA,q)
-transectAll[[25]]=rasterize(x=Sb.17,y=transectAll[[25]],
-                         field=1,fun="last",background=NA)
+## transectAll[[21]][]=rep(NA,q)
+## transectAll[[22]][]=rep(NA,q)
+## transectAll[[23]][]=rep(NA,q)
+## transectAll[[24]][]=rep(NA,q)
+## transectAll[[25]]=rasterize(x=Sb.17,y=transectAll[[25]],
+##                          field=1,fun="last",background=NA)
 
-plot(Counts[[25]])
-plot(transectAll[[25]],add=TRUE)
+## plot(Counts[[25]])
+## plot(transectAll[[25]],add=TRUE)
 
 #####################################################
 ### Combine transect data and count data
 #####################################################
 
 Y.r[]=Counts[[7]][]*transectAll[[7]][]
-Y.r=stack(mget(rep("Y.r",25)))
+Y.r=stack(mget(rep("Y.r",20)))
 for (i in 1:25) {
   Y.r[[i]][]=ifelse(Counts[[i]][]>0,Counts[[i]][],
     transectAll[[i]][]-1)
@@ -1065,12 +1136,13 @@ Y=c(Y.r[[1]][],
     Y.r[[17]][],
     Y.r[[18]][],
     Y.r[[19]][],
-    Y.r[[20]][],
-    Y.r[[21]][],
-    Y.r[[22]][],
-    Y.r[[23]][],
-    Y.r[[24]][],
-    Y.r[[25]][])
+    Y.r[[20]][]## ,
+    ## Y.r[[21]][],
+    ## Y.r[[22]][],
+    ## Y.r[[23]][],
+    ## Y.r[[24]][],
+    ## Y.r[[25]][]
+    )
 
 #################################################
 #################################################
@@ -1086,6 +1158,7 @@ Y=c(Y.r[[1]][],
 ###
 
 data=list(Y=Y,
+          Y.2017=Y.2017,
           ISU=ISU,
           X=X)
 
@@ -1171,6 +1244,7 @@ p.2003=0.76
 p.2004=0.77
 p.2006=0.75
 p.2012=0.58
+p.2017=0.05
 p=c(rep(NA,6*q),
     rep(p.1999,q),
     rep(p.2000,q),
@@ -1181,7 +1255,10 @@ p=c(rep(NA,6*q),
     rep(NA,q),
     rep(p.2006,q),
     rep(NA,q*5),
-    rep(p.2012,q))
+    rep(p.2012,q),
+    rep(NA,q*4),
+    rep(p.2017,q)
+    )
 odp=0.5
 
 inits=list(gamma=gamma,

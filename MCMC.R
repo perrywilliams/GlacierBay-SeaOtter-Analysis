@@ -456,7 +456,8 @@ MCMC=function(data,
         if(odp.star>0&odp.star<1){
             mh1=sum(dnbinom(x=N,size=odp.star,,mu=lambda,log=TRUE),
                     na.rm=TRUE)
-            mh2=sum(dnbinom(x=N,size=odp,,mu=lambda,log=TRUE),na.rm=TRUE)
+            mh2=sum(dnbinom(x=N,size=odp,,mu=lambda,log=TRUE),
+                    na.rm=TRUE)
             mh=exp(mh1-mh2)
             if(mh>runif(1)){
                 odp=odp.star
