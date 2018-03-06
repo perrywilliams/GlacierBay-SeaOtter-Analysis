@@ -254,9 +254,14 @@ Counts.sub=rasterize(x=utmcoor@coords,
                      field=Counts.tmp,fun="max",na.rm=TRUE,
                      background=0)
 
-head(obs.r)
-points(obs.r$LONGITUDE,obs.r$LATITUDE,col=2,pch=16)
-text(obs.r$LONGITUDE,obs.r$LATITUDE,obs.r$TransectNo)
+plot(Counts.sub)
+Counts[[21]][]=rep(NA,q)
+Counts[[22]][]=rep(NA,q)
+Counts[[23]][]=rep(NA,q)
+Counts[[24]][]=rep(NA,q)
+Counts[[25]][]=Counts.sub[]
+
+
 
 ###################################################################
 ### Transects
@@ -762,23 +767,76 @@ for(i in unique(ID)[1:324]){  ## 347
 ### 2017
 ###
 
+d.17.tmp=read.csv(paste("~/Dropbox/Post-Doc/",
+                        "SurveyRoute_2017/2017AllTransects.csv",
+                        sep=""))
+
+
+DDcoor=SpatialPoints(d.17.tmp[,7:6],CRS(
+                           "+proj=longlat  +datum=WGS84")
+                       )
+
+utmcoor=spTransform(DDcoor,
+                       CRS(
+                           "+proj=utm +zone=8  +datum=NAD27 +units=m")
+                       )
+
+d.17.tmp[,7:6]=utmcoor@coords
 
 ###
-### Plot optimal transects
+### Unique transects flown in 2017
 ###
 
-d.o=subset(T.2017,Type=="Optimal")
-plot(d.o$Longitude,d.o$Latitude)
-text(d.o$Longitude,d.o$Latitude,d.o$Transect)
+ID=cumsum(!duplicated(d.17.tmp[,1:2]))
+d.17=cbind(d.17.tmp,ID)
+
 
 ###
-### Plot abundance transects
+### Subset observation data for each transect
 ###
 
-d.a=subset(T.2017,Type=="Abundance")
-plot(d.a$Longitude,d.a$Latitude,ylim=c(58.3,58.8))
-text(d.a$Longitude,d.a$Latitude,d.a$Transect)
+l.17=list()
+Sl.17=list()
+S.17=list()
 
+for(i in unique(ID)){  ## 347
+    t.sub=subset(d.17,ID==i)
+
+    ##
+    ## Store start, end, group location coordinates
+    ##
+
+    coords.tmp1=matrix(,dim(t.sub)[1]*3,2)
+    colnames(coords.tmp1)=c("x","y")
+
+    ## West end point
+    coords.tmp1[1:dim(t.sub)[1],1]=t.sub[t.sub$Side=="W",]$Longitude
+    coords.tmp1[1:dim(t.sub)[1],2]=t.sub[t.sub$Side=="W",]$Latitude
+
+    ## ## Group locations
+    ## coords.tmp1[(dim(t.sub)[1]+1):(2*dim(t.sub)[1]),1]=t.sub$GROUP_X
+    ## coords.tmp1[(dim(t.sub)[1]+1):(2*dim(t.sub)[1]),2]=t.sub$GROUP_Y
+
+    ## East end point
+    coords.tmp1[(2*dim(t.sub)[1]+1):(3*dim(t.sub)[1]),1]=t.sub[t.sub$Side=="E",]$Longitude
+    coords.tmp1[(2*dim(t.sub)[1]+1):(3*dim(t.sub)[1]),2]=t.sub[t.sub$Side=="E",]$Latitude
+
+    ## Remove duplicates
+    coords.tmp2=unique(coords.tmp1)
+
+    ## Remove NA rows
+    coords.tmp3=coords.tmp2[!is.na(coords.tmp2[,1]),]
+
+    ## Order from left to right
+    coords=coords.tmp3[order(coords.tmp3[,1]),]
+
+    l.17[[i]]=coords
+    Sl.17[[i]]=Line(l.17[[i]])
+    S.17[[i]]=Lines(list(Sl.17[[i]]), ID=i)
+    Sb.17=SpatialLines(S.17)
+
+}
+plot(Sb.17)
 
 ##################################################
 ### Rasterize transects
@@ -787,7 +845,7 @@ text(d.a$Longitude,d.a$Latitude,d.a$Transect)
 transectAll=raster(,nrows=y,ncols=x,xmn=xmin,
                   xmx=xmax,ymn=ymin,ymx=ymax,crs=NA)
 transectAll[]=rep(NA,q)
-transectAll=stack(mget(rep("transectAll",20)))
+transectAll=stack(mget(rep("transectAll",25)))
 transectAll[[1]][]=rep(NA,q)
 transectAll[[2]][]=rep(NA,q)
 transectAll[[3]][]=rep(NA,q)
@@ -816,20 +874,28 @@ transectAll[[18]][]=rep(NA,q)
 transectAll[[19]][]=rep(NA,q)
 transectAll[[20]]=rasterize(x=Sb.12,y=transectAll[[20]],
                          field=1,fun="last",background=NA)
+transectAll[[21]][]=rep(NA,q)
+transectAll[[22]][]=rep(NA,q)
+transectAll[[23]][]=rep(NA,q)
+transectAll[[24]][]=rep(NA,q)
+transectAll[[25]]=rasterize(x=Sb.17,y=transectAll[[25]],
+                         field=1,fun="last",background=NA)
 
-## plot(transectAll)
+plot(Counts[[25]])
+plot(transectAll[[25]],add=TRUE)
 
 #####################################################
 ### Combine transect data and count data
 #####################################################
 
 Y.r[]=Counts[[7]][]*transectAll[[7]][]
-Y.r=stack(mget(rep("Y.r",20)))
-for (i in 1:20) {
+Y.r=stack(mget(rep("Y.r",25)))
+for (i in 1:25) {
   Y.r[[i]][]=ifelse(Counts[[i]][]>0,Counts[[i]][],
     transectAll[[i]][]-1)
 }
 ## plot(Y.r[[20]])
+## plot(Y.r[[25]])
 
 ######################################################
 ### Load ISU data
@@ -999,7 +1065,12 @@ Y=c(Y.r[[1]][],
     Y.r[[17]][],
     Y.r[[18]][],
     Y.r[[19]][],
-    Y.r[[20]][])
+    Y.r[[20]][],
+    Y.r[[21]][],
+    Y.r[[22]][],
+    Y.r[[23]][],
+    Y.r[[24]][],
+    Y.r[[25]][])
 
 #################################################
 #################################################
@@ -1023,7 +1094,7 @@ data=list(Y=Y,
 ###
 
 dt=1/200
-time.frame=1993:2012
+time.frame=1993:2018
 us.fact=10
 res=400
 d=c(442000,6465000)
@@ -1044,8 +1115,8 @@ st.info=list(dt=dt,
 ### MCMC Settings
 ###
 
-n.iter=100
-checkpoint=10
+n.iter=50000
+checkpoint=1000
 
 ###
 ### Priors
@@ -1137,7 +1208,7 @@ parameters=c("gamma",
 ### Output location
 ###
 
-output.location="~/GB_DataAnalysis.RData"
+output.location="~/GB_2018_DataAnalysis.RData"
 
 Bathymetry=bath
 rm(list=ls()[!ls() %in% c("data",
