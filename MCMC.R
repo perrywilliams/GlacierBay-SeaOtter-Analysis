@@ -183,6 +183,14 @@ MCMC=function(data,
     Y.2012=data$ISU$Y.2012
     N.2012=data$ISU$N.2012
 
+    Y.2017=data$Y.2017
+    y..=sum(Y.2017,na.rm=TRUE)
+    yi.=apply(Y.2017,1,sum,na.rm=TRUE)
+    max.Y.2017=ifelse(apply(Y.2017,1,max,na.rm=TRUE)>0,
+                      apply(Y.2017,1,max,na.rm=TRUE),
+                      NA)
+    J=apply(!is.na(Y.2017),1,sum)
+
     ##
     ## Starting values
     ##
@@ -243,7 +251,12 @@ MCMC=function(data,
     c.all=setValues(c.all, calcc(H, vec(c0[]),time.steps)[,keep])
     lambda=vec(disaggregate(c.all,us.fact)/delta)
     N=rnbinom(length(lambda),size=odp,,mu=lambda)
-    N=ifelse(N<Y,Y,N)
+    N[1:length(Y)]=ifelse(N[1:length(Y)]<Y,Y,N[1:length(Y)])
+    N[(24*q+1):(25*q)][!is.na(max.Y.2017)]=
+        ifelse(N[(24*q+1):(25*q)][!is.na(max.Y.2017)]<max.Y.2017[!is.na(max.Y.2017)],
+               max.Y.2017[!is.na(max.Y.2017)]+1,
+               N[(24*q+1):(25*q)][!is.na(max.Y.2017)]
+               )
 
     ##
     ## Tuning parameters
@@ -430,23 +443,42 @@ MCMC=function(data,
         }
 
         ##
-        ## Sample N
+        ## Sample N (1993-2012)
         ##
 
-        N.star=sample(-1:1,length(N),replace=TRUE)+N
+        N.star=sample(-1:1,length(Y),replace=TRUE)+N[1:length(Y)]
         N.star=ifelse(N.star<0,0,N.star)
-        mh1=dbinom(x=Y,size=N.star,prob=p,log=TRUE)+
-            dnbinom(x=N.star,size=odp,,mu=lambda,log=TRUE)
-        mh2=dbinom(x=Y,size=N,prob=p,log=TRUE)+
-            dnbinom(x=N,size=odp,,mu=lambda,log=TRUE)
+        mh1=dbinom(x=Y,size=N.star,prob=p[1:length(Y)],log=TRUE)+
+            dnbinom(x=N.star,size=odp,,mu=lambda[1:length(Y)],log=TRUE)
+        mh2=dbinom(x=Y,size=N[1:length(Y)],prob=p[1:length(Y)],log=TRUE)+
+            dnbinom(x=N[1:length(Y)],size=odp,,mu=lambda[1:length(Y)],log=TRUE)
         mh=exp(mh1-mh2)
         ru.tmp=runif(length(mh))
-        N=ifelse(mh>ru.tmp,
-                 N.star,
-                 N)
-        accept.N=ifelse(mh>ru.tmp,
-                        accept.N+1,
-                        accept.N)
+        N[1:length(Y)]=ifelse(mh>ru.tmp,
+                              N.star,
+                              N[1:length(Y)])
+        accept.N[1:length(Y)]=ifelse(mh>ru.tmp,
+                                     accept.N[1:length(Y)]+1,
+                                     accept.N[1:length(Y)])
+
+        ##
+        ## Sample N (2017)
+        ##
+
+        N.star=sample(-1:1,dim(Y.2017)[1],replace=TRUE)+N[(24*q+1):(25*q)]
+        N.star=ifelse(N.star<0,0,N.star)
+        mh1=apply(dbinom(Y.2017,N.star,p[(24*q+1):(25*q)],log=TRUE),1,sum,na.rm=TRUE)+
+            dnbinom(N.star,size=odp,,mu=lambda[(24*q+1):(25*q)],log=TRUE)
+        mh2=apply(dbinom(Y.2017,N[(24*q+1):(25*q)],p[(24*q+1):(25*q)],log=TRUE),1,sum,na.rm=TRUE)+
+            dnbinom(N[(24*q+1):(25*q)],size=odp,,mu=lambda[(24*q+1):(25*q)],log=TRUE)
+        mh=exp(mh1-mh2)
+        mh[is.na(mh)]=0
+        rcut=runif(length(mh))
+        N[(24*q+1):(25*q)]=ifelse(mh>rcut,N.star,N[(24*q+1):(25*q)])
+        JN=J*N[(24*q+1):(25*q)]
+        accept.N[1:length(Y)]=ifelse(mh>ru.tmp,
+                                     accept.N[1:length(Y)]+1,
+                                     accept.N[1:length(Y)])
 
         ##
         ## Sample odp
@@ -485,6 +517,8 @@ MCMC=function(data,
                        q.p,sum(N.2006-Y.2006)+r.p)
         p.2012=rbeta(1,sum(Y.2012)+
                        q.p,sum(N.2012-Y.2012)+r.p)
+        p.2017=rbeta(1,y..+q.p,
+                     sum(JN-yi.,na.rm=TRUE)+r.p)
         p=c(rep(NA,6*q),
             rep(p.1999,q),
             rep(p.2000,q),
@@ -495,7 +529,10 @@ MCMC=function(data,
             rep(NA,q),
             rep(p.2006,q),
             rep(NA,q*5),
-            rep(p.2012,q))
+            rep(p.2012,q),
+            rep(NA,q*4),
+            rep(p.2017,q),
+            rep(NA,q))
 
         ##
         ## Derived parameters
