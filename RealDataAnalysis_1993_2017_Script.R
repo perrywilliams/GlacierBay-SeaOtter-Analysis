@@ -143,9 +143,9 @@ q=x*y
 
 bath=crop(Bath.r,extent(xmin,xmax,ymin,ymax))
 
-###
+############################################################################
 ### Load Glacier Bay Sea Otter Data
-###
+############################################################################
 
 data=read.csv("~/Dropbox/Post-Doc/OriginalDataFiles/GLBA_noDots.csv")
 dataDistr=read.csv(paste("~/Dropbox/Post-Doc/OriginalDataFiles/",
@@ -157,20 +157,19 @@ dataDistr=dataDistr[-ind.pred,]
 ind=1993:2012
 
 ###
-### Load 2017 data
-###
-
-
-
-###
 ### Convert Data to Raster
 ###
 
 cell=raster(,nrows=y,ncols=x,xmn=xmin,xmx=xmax,
             ymn=ymin,ymx=ymax,crs=NA)
-CISU=N.r=ISUind.r=Y.r=Counts=Boundary=
-    BoundaryDist=DistCov=DepthCov=
-        gamma=delta=lambda0=SurvR=SimulatedDataR=cell
+CISU=N.r=
+    ISUind.r=
+        Y.r=Counts=
+            Boundary=
+                BoundaryDist=
+                    DistCov=
+                        DepthCov=
+                            gamma=delta=lambda0=SurvR=SimulatedDataR=cell
 c0=raster(,nrows=y/us.fact,ncols=x/us.fact,
           xmn=xmin,xmx=xmax,ymn=ymin,ymx=ymax,
           crs=NA)
@@ -185,13 +184,15 @@ Counts.tmp=c(data1.sub$animals,data2.sub$animals)
 Counts.sub=rasterize(x=cbind(x_loc,y_loc),y=data.r,
                      field=Counts.tmp,fun="max",na.rm=TRUE,background=0)
 Counts[]=Counts.sub[]
-Counts=stack(mget(rep("Counts",20)))
+Counts=stack(mget(rep("Counts",25)))
+
 years=1994:2012
 ind=2
 for(t in years){
     data1.sub=subset(data,year==t)
     data1.sub=data1.sub[!is.na(data1.sub$GROUP_X),]
     data2.sub=subset(dataDistr,year==t)
+
     x_loc=c(data1.sub$GROUP_X,data2.sub$POINT_X)
     y_loc=c(data1.sub$GROUP_Y,data2.sub$POINT_Y)
     Counts.tmp=c(data1.sub$animals,data2.sub$animals)
@@ -205,7 +206,57 @@ for(t in years){
     }
     ind=ind+1
 }
-## plot(Counts)
+
+############################################################################
+### Add new aerial photograph data
+############################################################################
+
+###
+### Locations of observations
+###
+
+obs.r=read.csv(paste("~/Dropbox/Post-Doc/",
+                     "OriginalDataFiles/SO_I_2017/SO_I_20170719_R.csv",
+                      sep=""))
+
+obs.o=read.csv(paste("~/Dropbox/Post-Doc/",
+                     "OriginalDataFiles/SO_I_2017/SO_I_20170721_O.csv",
+                      sep=""))
+
+obs.a=read.csv(paste("~/Dropbox/Post-Doc/",
+                     "OriginalDataFiles/SO_I_2017/SO_I_20170728_A.csv",
+                      sep=""))
+
+x_loc=c(obs.r$LONGITUDE_WGS84,
+        obs.o$LONGITUDE_WGS84,
+        obs.a$LONGITUDE_WGS84)
+y_loc=c(obs.r$LATITUDE_WGS84,
+        obs.o$LATITUDE_WGS84,
+        obs.a$LATITUDE_WGS84)
+Counts.tmp=c(obs.r$COUNT_ADULT+obs.r$COUNT_PUP,
+             obs.o$COUNT_ADULT+obs.o$COUNT_PUP,
+             obs.a$COUNT_ADULT+obs.a$COUNT_PUP
+             )
+
+xyc=cbind(x_loc,y_loc)
+xyc=xyc[!is.na(x_loc),]
+DDcoor=SpatialPoints(xyc,CRS(
+                           "+proj=longlat  +datum=WGS84")
+                       )
+
+utmcoor=spTransform(DDcoor,
+                       CRS(
+                           "+proj=utm +zone=8  +datum=NAD27 +units=m")
+                       )
+
+Counts.sub=rasterize(x=utmcoor@coords,
+                     y=data.r,
+                     field=Counts.tmp,fun="max",na.rm=TRUE,
+                     background=0)
+
+head(obs.r)
+points(obs.r$LONGITUDE,obs.r$LATITUDE,col=2,pch=16)
+text(obs.r$LONGITUDE,obs.r$LATITUDE,obs.r$TransectNo)
 
 ###################################################################
 ### Transects
@@ -706,6 +757,28 @@ for(i in unique(ID)[1:324]){  ## 347
 
 }
 ## plot(Sb.12)
+
+###
+### 2017
+###
+
+
+###
+### Plot optimal transects
+###
+
+d.o=subset(T.2017,Type=="Optimal")
+plot(d.o$Longitude,d.o$Latitude)
+text(d.o$Longitude,d.o$Latitude,d.o$Transect)
+
+###
+### Plot abundance transects
+###
+
+d.a=subset(T.2017,Type=="Abundance")
+plot(d.a$Longitude,d.a$Latitude,ylim=c(58.3,58.8))
+text(d.a$Longitude,d.a$Latitude,d.a$Transect)
+
 
 ##################################################
 ### Rasterize transects
