@@ -211,13 +211,15 @@ for(t in years){
 ### Add new (2017) aerial photograph data
 ############################################################################
 
-rand.2017=read.csv("~/Dropbox/Post-Doc/OriginalDataFiles/SO_D_2017/SO_D_20170719_R.csv")
+rand.2017=read.csv(paste("~/Dropbox/Post-Doc/OriginalDataFiles/",
+                         "SO_D_2017/SO_D_20170719_R.csv",sep=""))
 rand.2017=rand.2017[!is.na(rand.2017$LATITUDE_WGS84),]
-opt.2017=read.csv("~/Dropbox/Post-Doc/OriginalDataFiles/SO_D_2017/SO_D_20170721_O.csv")
+opt.2017=read.csv(paste("~/Dropbox/Post-Doc/OriginalDataFiles/",
+                        "SO_D_2017/SO_D_20170721_O.csv",sep=""))
 opt.2017=opt.2017[!is.na(opt.2017$LATITUDE_WGS84),]
-abund.2017=read.csv("~/Dropbox/Post-Doc/OriginalDataFiles/SO_D_2017/SO_D_20170728_A.csv")
+abund.2017=read.csv(paste("~/Dropbox/Post-Doc/OriginalDataFiles/",
+                          "SO_D_2017/SO_D_20170728_A.csv",sep=""))
 abund.2017=abund.2017[!is.na(abund.2017$LATITUDE_WGS84),]
-
 all.2017=rbind(rand.2017,opt.2017,abund.2017)
 xyc=cbind(all.2017$LONGITUDE_WGS84,
           all.2017$LATITUDE_WGS84)
@@ -236,7 +238,7 @@ DDcoor=SpatialPoints(xyc,CRS(
 
 utmcoor=spTransform(DDcoor,
                        CRS(
-                           "+proj=utm +zone=8  +datum=NAD27 +units=m")
+                           "+proj=utm +zone=8 +datum=NAD27 +units=m")
                        )
 head(utmcoor@coords)
 
@@ -281,58 +283,6 @@ for(i in 1:length(uniq.ID)){
 Y=cbind(uniq.ID,Y.tmp)
 Y.2017=matrix(NA,q,max.dim.Y2)
 Y.2017[uniq.ID,]=Y.tmp
-
-###
-### Locations of observations
-###
-
-## obs.r=read.csv(paste("~/Dropbox/Post-Doc/",
-##                      "OriginalDataFiles/SO_I_2017/SO_I_20170719_R.csv",
-##                       sep=""))
-
-## obs.o=read.csv(paste("~/Dropbox/Post-Doc/",
-##                      "OriginalDataFiles/SO_I_2017/SO_I_20170721_O.csv",
-##                       sep=""))
-
-## obs.a=read.csv(paste("~/Dropbox/Post-Doc/",
-##                      "OriginalDataFiles/SO_I_2017/SO_I_20170728_A.csv",
-##                       sep=""))
-
-## x_loc=c(obs.r$LONGITUDE_WGS84,
-##         obs.o$LONGITUDE_WGS84,
-##         obs.a$LONGITUDE_WGS84)
-## y_loc=c(obs.r$LATITUDE_WGS84,
-##         obs.o$LATITUDE_WGS84,
-##         obs.a$LATITUDE_WGS84)
-## Counts.tmp=c(obs.r$COUNT_ADULT+obs.r$COUNT_PUP,
-##              obs.o$COUNT_ADULT+obs.o$COUNT_PUP,
-##              obs.a$COUNT_ADULT+obs.a$COUNT_PUP
-##              )
-
-## xyc=cbind(x_loc,y_loc)
-## xyc=xyc[!is.na(x_loc),]
-## DDcoor=SpatialPoints(xyc,CRS(
-##                            "+proj=longlat  +datum=WGS84")
-##                        )
-
-## utmcoor=spTransform(DDcoor,
-##                        CRS(
-##                            "+proj=utm +zone=8  +datum=NAD27 +units=m")
-##                        )
-
-## Counts.sub=rasterize(x=utmcoor@coords,
-##                      y=data.r,
-##                      field=Counts.tmp,fun="max",na.rm=TRUE,
-##                      background=0)
-
-## plot(Counts.sub)
-## Counts[[21]][]=rep(NA,q)
-## Counts[[22]][]=rep(NA,q)
-## Counts[[23]][]=rep(NA,q)
-## Counts[[24]][]=rep(NA,q)
-## Counts[[25]][]=Counts.sub[]
-
-
 
 ###################################################################
 ### Transects
@@ -830,84 +780,7 @@ for(i in unique(ID)[1:324]){  ## 347
     Sl.12[[i]]=Line(l.12[[i]])
     S.12[[i]]=Lines(list(Sl.12[[i]]), ID=i)
     Sb.12=SpatialLines(S.12)
-
 }
-## plot(Sb.12)
-
-## ###
-## ### 2017
-## ###
-
-## d.17.tmp=read.csv(paste("~/Dropbox/Post-Doc/",
-##                         "SurveyRoute_2017/2017AllTransects.csv",
-##                         sep=""))
-
-
-## DDcoor=SpatialPoints(d.17.tmp[,7:6],CRS(
-##                            "+proj=longlat  +datum=WGS84")
-##                        )
-
-## utmcoor=spTransform(DDcoor,
-##                        CRS(
-##                            "+proj=utm +zone=8  +datum=NAD27 +units=m")
-##                        )
-
-## d.17.tmp[,7:6]=utmcoor@coords
-
-## ###
-## ### Unique transects flown in 2017
-## ###
-
-## ID=cumsum(!duplicated(d.17.tmp[,1:2]))
-## d.17=cbind(d.17.tmp,ID)
-
-
-## ###
-## ### Subset observation data for each transect
-## ###
-
-## l.17=list()
-## Sl.17=list()
-## S.17=list()
-
-## for(i in unique(ID)){  ## 347
-##     t.sub=subset(d.17,ID==i)
-
-##     ##
-##     ## Store start, end, group location coordinates
-##     ##
-
-##     coords.tmp1=matrix(,dim(t.sub)[1]*3,2)
-##     colnames(coords.tmp1)=c("x","y")
-
-##     ## West end point
-##     coords.tmp1[1:dim(t.sub)[1],1]=t.sub[t.sub$Side=="W",]$Longitude
-##     coords.tmp1[1:dim(t.sub)[1],2]=t.sub[t.sub$Side=="W",]$Latitude
-
-##     ## ## Group locations
-##     ## coords.tmp1[(dim(t.sub)[1]+1):(2*dim(t.sub)[1]),1]=t.sub$GROUP_X
-##     ## coords.tmp1[(dim(t.sub)[1]+1):(2*dim(t.sub)[1]),2]=t.sub$GROUP_Y
-
-##     ## East end point
-##     coords.tmp1[(2*dim(t.sub)[1]+1):(3*dim(t.sub)[1]),1]=t.sub[t.sub$Side=="E",]$Longitude
-##     coords.tmp1[(2*dim(t.sub)[1]+1):(3*dim(t.sub)[1]),2]=t.sub[t.sub$Side=="E",]$Latitude
-
-##     ## Remove duplicates
-##     coords.tmp2=unique(coords.tmp1)
-
-##     ## Remove NA rows
-##     coords.tmp3=coords.tmp2[!is.na(coords.tmp2[,1]),]
-
-##     ## Order from left to right
-##     coords=coords.tmp3[order(coords.tmp3[,1]),]
-
-##     l.17[[i]]=coords
-##     Sl.17[[i]]=Line(l.17[[i]])
-##     S.17[[i]]=Lines(list(Sl.17[[i]]), ID=i)
-##     Sb.17=SpatialLines(S.17)
-
-## }
-## plot(Sb.17)
 
 ##################################################
 ### Rasterize transects
@@ -945,15 +818,6 @@ transectAll[[18]][]=rep(NA,q)
 transectAll[[19]][]=rep(NA,q)
 transectAll[[20]]=rasterize(x=Sb.12,y=transectAll[[20]],
                          field=1,fun="last",background=NA)
-## transectAll[[21]][]=rep(NA,q)
-## transectAll[[22]][]=rep(NA,q)
-## transectAll[[23]][]=rep(NA,q)
-## transectAll[[24]][]=rep(NA,q)
-## transectAll[[25]]=rasterize(x=Sb.17,y=transectAll[[25]],
-##                          field=1,fun="last",background=NA)
-
-## plot(Counts[[25]])
-## plot(transectAll[[25]],add=TRUE)
 
 #####################################################
 ### Combine transect data and count data
@@ -1136,12 +1000,7 @@ Y=c(Y.r[[1]][],
     Y.r[[17]][],
     Y.r[[18]][],
     Y.r[[19]][],
-    Y.r[[20]][]## ,
-    ## Y.r[[21]][],
-    ## Y.r[[22]][],
-    ## Y.r[[23]][],
-    ## Y.r[[24]][],
-    ## Y.r[[25]][]
+    Y.r[[20]][]
     )
 
 #################################################
@@ -1299,8 +1158,12 @@ rm(list=ls()[!ls() %in% c("data",
                           "checkpoint",
                           "output.location")])
 
-###
+############################################################################
 ### Run MCMC
+############################################################################
+
+###
+### Source from GitHub, or locally
 ###
 
 ## script=getURL(
@@ -1322,10 +1185,8 @@ MCMC(data,
      checkpoint=checkpoint,
      output.location)
 
-
-
 ############################################################################
-### Load MCMC results
+### Load and view MCMC results
 ############################################################################
 
 rm(list=ls())

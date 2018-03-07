@@ -287,7 +287,7 @@ MCMC=function(data,
         MCMC.Chains$kappa=matrix(,n.iter,1)
     }
     if('p'%in%parameters){
-        MCMC.Chains$p=matrix(,n.iter,8)
+        MCMC.Chains$p=matrix(,n.iter,9)
     }
     if('odp'%in%parameters){
         MCMC.Chains$odp=matrix(,n.iter,1)
