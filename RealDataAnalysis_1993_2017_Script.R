@@ -1386,11 +1386,17 @@ for(i in 1:20){
     plot(N.est[,i],type='l')
 }
 
+par(mfrow=c(3,2),mar=c(2,2,0,1))
+for(i in 21:25){
+    plot(N.est[,i],type='l')
+}
+
 ###
 ### Plot p
 ###
 
+par(mfrow=c(3,3))
 p.est=MCMC.Chains$p[1:status,]
-for(i in 1:8){
-    plot(p.est[,i],type='l');abline(h=p.truth[i],col=2)
+for(i in 1:9){
+    plot(p.est[,i],type='l')
 }

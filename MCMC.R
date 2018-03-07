@@ -561,7 +561,7 @@ MCMC=function(data,
         }
         if('p'%in%parameters){
             MCMC.Chains$p[k,]=c(p.1999,p.2000,p.2001,p.2002,p.2003,
-                                p.2004,p.2006,p.2012)
+                                p.2004,p.2006,p.2012,p.2017)
         }
         if('odp'%in%parameters){
             MCMC.Chains$odp[k,]=odp
