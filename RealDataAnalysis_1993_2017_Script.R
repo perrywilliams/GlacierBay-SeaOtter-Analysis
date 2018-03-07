@@ -961,7 +961,7 @@ transectAll[[20]]=rasterize(x=Sb.12,y=transectAll[[20]],
 
 Y.r[]=Counts[[7]][]*transectAll[[7]][]
 Y.r=stack(mget(rep("Y.r",20)))
-for (i in 1:25) {
+for (i in 1:20) {
   Y.r[[i]][]=ifelse(Counts[[i]][]>0,Counts[[i]][],
     transectAll[[i]][]-1)
 }
@@ -1303,14 +1303,14 @@ rm(list=ls()[!ls() %in% c("data",
 ### Run MCMC
 ###
 
-script=getURL(
-    paste("https://raw.githubusercontent.com/perrywilliams/",
-          "GlacierBay-SeaOtter-Analysis/master/MCMC.R",sep=""),
-    ssl.verifypeer=FALSE)
-eval(parse(text = script))
+## script=getURL(
+##     paste("https://raw.githubusercontent.com/perrywilliams/",
+##           "GlacierBay-SeaOtter-Analysis/master/MCMC.R",sep=""),
+##     ssl.verifypeer=FALSE)
+## eval(parse(text = script))
 
-## source(paste("~/Dropbox/GitHub/GlacierBay-SeaOtter-Analysis/",
-##              "GlacierBay-SeaOtter-Analysis/MCMC.R",sep=""))
+source(paste("~/Dropbox/GitHub/GlacierBay-SeaOtter-Analysis/",
+             "GlacierBay-SeaOtter-Analysis/MCMC.R",sep=""))
 
 MCMC(data,
      priors,
@@ -1329,7 +1329,7 @@ MCMC(data,
 ############################################################################
 
 rm(list=ls())
-output.location="~/GB_DataAnalysis.RData"
+output.location="~/GB_2018_DataAnalysis.RData"
 load(output.location)
 (status=sum(!is.na(MCMC.Chains[[3]])))
 
